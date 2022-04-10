@@ -1,3 +1,3 @@
-# Run $ python3 client.py serverPort
+# Run; $ python3 client.py serverPort
 def hi:
     pass
