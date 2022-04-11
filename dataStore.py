@@ -16,8 +16,8 @@ dataStore = {
     'threads': [
         {
             'threadtitle': "",
-            'threadID': 1,
-            'threadMembers': [],
+            'threadID': 1,  # not needed??
+            'threadMembers': [], # not needed??
             'threadMsgs': [
                 {
                     'msgID': 1,
