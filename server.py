@@ -180,4 +180,7 @@ if __name__ == "__main__":
                     continue
         except KeyboardInterrupt:
             killServer(serverSocket)
+        # Upon socket.timeout()
+        except:
+            continue
 
