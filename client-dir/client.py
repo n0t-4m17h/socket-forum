@@ -66,13 +66,12 @@ if __name__ == "__main__":
                 username = str(input("Enter username: "))
                 clientSocket.sendto(username.encode("utf-8"), ('localhost', serverPort))
                 # Wait for Server to respond with either "WRONG/VALID USERNAME"
-                print("I am at 'enter username'") ######################
                 currCmd = "ENTER USERNAME"
                 response, serverAddress = clientSocket.recvfrom(2048)
                 respStr = (response.decode("utf-8")).strip()
             # IF username doesn't exist, then prompt it again (i.e restart loop)
             if respStr == "WRONG USERNAME":
-                print("Wrong username")
+                print("Invalid username")
                 enterUser = True
                 continue
             # IF Server decides its gonna create this new user, then send Server a password from user
@@ -81,11 +80,8 @@ if __name__ == "__main__":
                     password = str(input("Enter new password: "))
                     clientSocket.sendto(password.encode("utf-8"), ('localhost', serverPort))
                     currCmd = "NEW USERS PASSWORD"
-                    print("I am at 'new users password 1'") ######################
-                print("I am at 'new users password 2'") ######################
                 currCmd = "NEW USERS PASSWORD"
                 response = str(clientSocket.recvfrom(2048)[0], "utf-8")
-                print(f"Response: {response}")
                 if response == "NEW USER LOGGED IN":
                     enterUser = False
                     goToWhile2 = True
@@ -96,9 +92,7 @@ if __name__ == "__main__":
                     password = str(input("Enter password: "))
                     clientSocket.sendto(password.encode("utf-8"), ('localhost', serverPort))
                     currCmd = "ENTER PASSWORD"
-                    print("I am at 'valid username 1'") ######################
                 enterUser = False
-                print("I am at 'valid username 2'") ######################
                 currCmd = "ENTER PASSWORD"
                 response = str(clientSocket.recvfrom(2048)[0], "utf-8")
                 if response == "WRONG PASSWORD":

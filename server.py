@@ -62,7 +62,6 @@ if __name__ == "__main__":
             checkForNewUserIter, i = 0, 0
             currCmd = ""
             userOnline = True
-            sockTimeout = False
             while userOnline: # while loop 2 for authenticating
                 # messagePass, clientAddr = serverSocket.recvfrom(2048)
                 try:
@@ -72,49 +71,41 @@ if __name__ == "__main__":
                     # (i != 7) helped debug an issue with currCmd = "NEW USER", as when socket.timeout occured there, it wouldnt return to there, instead come straight here
                     elif ("WAITING USERNAME" in currCmd) or (i != 0 and i != 7): # this is for if the username prev entered is ticked as wrong, so on the 2nd input, wanna create a new user
                         currCmd = "WAITING USERNAME"
-                        print("I am at 'waiting for username'") ######################
                         username = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
-                    # first check is for cases of socket.timeout()
+                    # FIRST check conditions are for cases of socket.timeout()
                     if "VALID USERNAME" in currCmd or usernameExists(username) is True:
                         if ("PASSWORD" in currCmd) is False: # prevents access to here, as "PASSWORD" is in next IF
                             checkForNewUserIter = 0 # reset the "check if new username is inputted" to 0
                             serverSocket.sendto("VALID USERNAME".encode("utf-8"), clientAddr) # Wait for password next
-                            print("I am at 'valid username'") ######################
                             currCmd = "VALID USERNAME" # used incase of sockettimeout
                             password = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
-                            print(f"Pass msg: {password}")
                         # Check if username and password combo matches in credentials.txt
                         if "WRONG PASSWORD" in currCmd or checkUserPassCombo(username, password) is False:
-                            time.sleep(1)
                             serverSocket.sendto("WRONG PASSWORD".encode("utf-8"), clientAddr)
-                            print("I am at 'valid username wrong password'") ######################
                             currCmd = "VALID USERNAME WRONG PASSWORD"
-                            print("Wrong Password")
+                            print(f'Wrong Password for "{username}"')
                             continue # loop back again, waiting for username
                         elif "VALID PASSWORD" in currCmd or checkUserPassCombo(username, password) is True:
                             # ADD USER to data store, and go to while loop 3
                             serverSocket.sendto("VALID PASSWORD".encode("utf-8"), clientAddr)
-                            print("I am at 'valid username valid password'") ######################
                             currCmd = "VALID USERNAME VALID PASSWORD"
-                            # print("User + Pass combo is correct")
                             print(f'"{username}" successful login')
                             createNewUser(username, password, True, False)
 
                     elif "WRONG USERNAME" in currCmd or "NEW USER" in currCmd or usernameExists(username) is False: # else its a NEW user
-                        if "WRONG USERNAME 1" in currCmd or checkForNewUserIter == 0:
+                        if "WRONG USERNAME 1" in currCmd or checkForNewUserIter == 0: # User has only inputted Invalid username ONCE; isn't creating a new user, yet
                             # respond to Client with "WRONG USERNAME"
                             serverSocket.sendto("WRONG USERNAME".encode("utf-8"), clientAddr)
-                            print("I am at 'wrong username 1'") ######################
                             currCmd = "WRONG USERNAME 1"
-                            print("Wrong username")
+                            print(f'Wrong username: "{username}"')
                             checkForNewUserIter += 1
                             prevUsernameInput = username
                             continue # loop while 1 again
+                        # User has now entered invalid Username TWICE, but 2nd input is different to first input, so not creating a new user, yet
                         elif "WRONG USERNAME 2" in currCmd or prevUsernameInput != username:
                             serverSocket.sendto("WRONG USERNAME".encode("utf-8"), clientAddr)
-                            print("I am at 'wrong username 2'") ######################
                             currCmd = "WRONG USERNAME 2"
-                            print("Wrong username")
+                            print(f'Wrong username: "{username}"')
                             prevUsernameInput = username
                             continue
                         # if iterator != 0 && prevUserInput == user, 
@@ -124,15 +115,14 @@ if __name__ == "__main__":
                             # dont resend request if coming back from socket.timeout
                             if ("NEW USER" in currCmd) is False:
                                 serverSocket.sendto("NEW USERS PASSWORD".encode("utf-8"), clientAddr)
-                            print("I am at 'detected new user'") ######################
-                            print("Detected new user, waiting for new password")
+                            print(f'Detected new user "{username}", waiting for new password')
                             currCmd = "NEW USER" 
                             i = 7
                             password = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
                             createNewUser(username, password, True, True)
                             serverSocket.sendto("NEW USER LOGGED IN".encode("utf-8"), clientAddr)
-                            print(f'"{username}" successful login')
-                            # code now jumps to 3rd while loop, in 2 lines
+                            print(f'"{username}" successful login!')
+                            # code now jumps to 3rd while loop, in 3 lines
 
                     checkForNewUserIter = 0 # reset this for the next Client ??
                     while 1: # while loop 3 for normal COMMANDS (after logging in)
@@ -168,23 +158,22 @@ if __name__ == "__main__":
                         elif cmdMsgBroken[0] == "RMV":
                             pass
                         
-                
+                # while 2's try-excepts
                 except Exception as e:
                     # Upon socket.timeout()
                     if (str(e).rstrip()) == "timed out":
                         print("Client's packet timed out, retrying...")
-                        print(f"Last currCmd value: {currCmd}")
-                        # is this needed below?? 
-                        # serverSocket.sendto("TIMEOUT RESTARTING".encode("utf-8"), clientAddr)
+                        # print(f"Last currCmd value: {currCmd}")
                         continue
                 # Upon "ctrl + c"
                 except KeyboardInterrupt:
                     killServer(serverSocket)
         
-        # Upon socket.timeout()
+        # while 1's try-excepts
         except Exception as e:
+            # Upon socket.timeout()
             if (str(e).rstrip()) == "timed out":
-                print("Except 1")
+                print("Client's packet timed out, retrying...")
                 continue
             else:
                 print(f"e: {e}")
