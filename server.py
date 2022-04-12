@@ -45,7 +45,7 @@ if __name__ == "__main__":
         sys.exit("Execute program as such: $python3 server.py <server_port>")
     dataStoreClear()
     serverPort = int(sys.argv[1])
-    WAIT_TIME_NRML = 10 # wait time for non-image commands
+    WAIT_TIME_NRML = 15 # wait time for non-image commands
     WAIT_TIME_IMG = 30 # wait time for image transfers
 
     serverSocket = socket(AF_INET, SOCK_DGRAM) 
@@ -85,6 +85,7 @@ if __name__ == "__main__":
                             print(f"Pass msg: {password}")
                         # Check if username and password combo matches in credentials.txt
                         if "WRONG PASSWORD" in currCmd or checkUserPassCombo(username, password) is False:
+                            time.sleep(1)
                             serverSocket.sendto("WRONG PASSWORD".encode("utf-8"), clientAddr)
                             print("I am at 'valid username wrong password'") ######################
                             currCmd = "VALID USERNAME WRONG PASSWORD"
@@ -168,19 +169,24 @@ if __name__ == "__main__":
                             pass
                         
                 
+                except Exception as e:
+                    # Upon socket.timeout()
+                    if (str(e).rstrip()) == "timed out":
+                        print("Client's packet timed out, retrying...")
+                        print(f"Last currCmd value: {currCmd}")
+                        # is this needed below?? 
+                        # serverSocket.sendto("TIMEOUT RESTARTING".encode("utf-8"), clientAddr)
+                        continue
                 # Upon "ctrl + c"
                 except KeyboardInterrupt:
                     killServer(serverSocket)
-                # Upon socket.timeout()
-                except:
-                    print("Client's packet timed out, retrying...")
-                    print(f"Last currCmd value: {currCmd}")
-                    # is this needed below?? 
-                    # serverSocket.sendto("TIMEOUT RESTARTING".encode("utf-8"), clientAddr)
-                    continue
+        
+        # Upon socket.timeout()
+        except Exception as e:
+            if (str(e).rstrip()) == "timed out":
+                print("Except 1")
+                continue
+            else:
+                print(f"e: {e}")
         except KeyboardInterrupt:
             killServer(serverSocket)
-        # Upon socket.timeout()
-        except:
-            continue
-

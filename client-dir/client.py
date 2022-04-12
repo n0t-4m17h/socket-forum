@@ -54,9 +54,10 @@ if __name__ == "__main__":
 
     clientSocket = socket(AF_INET, SOCK_DGRAM) # sock_dgram == UDP socket
     # Set the timeout time if packet is taking too long/lost
-    # clientSocket.settimeout(WAIT_TIME_NRML)
+    clientSocket.settimeout(WAIT_TIME_NRML)
     currCmd = ""
     enterUser = True
+    respStr = ""
     while 1: # while loop 1 for logging onto server
         # try-except block used for sockettimeout timer 
         try:
@@ -69,55 +70,59 @@ if __name__ == "__main__":
                 currCmd = "ENTER USERNAME"
                 response, serverAddress = clientSocket.recvfrom(2048)
                 respStr = (response.decode("utf-8")).strip()
-                # IF username doesn't exist, then prompt it again (i.e restart loop)
-                if respStr == "WRONG USERNAME":
-                    print("Wrong username")
+            # IF username doesn't exist, then prompt it again (i.e restart loop)
+            if respStr == "WRONG USERNAME":
+                print("Wrong username")
+                enterUser = True
+                continue
+            # IF Server decides its gonna create this new user, then send Server a password from user
+            elif respStr == "NEW USERS PASSWORD":
+                if ("NEW USERS PASSWORD" in currCmd) is False: # prevent password re-prompt & go straight to waiting for response 
+                    password = str(input("Enter new password: "))
+                    clientSocket.sendto(password.encode("utf-8"), ('localhost', serverPort))
+                    currCmd = "NEW USERS PASSWORD"
+                    print("I am at 'new users password 1'") ######################
+                print("I am at 'new users password 2'") ######################
+                currCmd = "NEW USERS PASSWORD"
+                response = str(clientSocket.recvfrom(2048)[0], "utf-8")
+                print(f"Response: {response}")
+                if response == "NEW USER LOGGED IN":
+                    enterUser = False
+                    goToWhile2 = True
+                    break
+            # IF given Username matches Server's files, then send Server the matching password
+            elif respStr == "VALID USERNAME":
+                if ("ENTER PASSWORD" in currCmd) is False: # prevent password re-prompt
+                    password = str(input("Enter password: "))
+                    clientSocket.sendto(password.encode("utf-8"), ('localhost', serverPort))
+                    currCmd = "ENTER PASSWORD"
+                    print("I am at 'valid username 1'") ######################
+                enterUser = False
+                print("I am at 'valid username 2'") ######################
+                currCmd = "ENTER PASSWORD"
+                response = str(clientSocket.recvfrom(2048)[0], "utf-8")
+                if response == "WRONG PASSWORD":
+                    print("Wrong password")
                     enterUser = True
                     continue
-            # IF Server decides its gonna create this new user, then send Server a password from user
-                elif respStr == "NEW USERS PASSWORD":
-                    if ("NEW USERS PASSWORD" in currCmd) is False: # prevent password re-prompt & go straight to waiting for response 
-                        password = str(input("Enter new password: "))
-                        clientSocket.sendto(password.encode("utf-8"), ('localhost', serverPort))
-                        currCmd = "NEW USERS PASSWORD"
-                        print("I am at 'new users password 1'") ######################
-                    print("I am at 'new users password 2'") ######################
-                    currCmd = "NEW USERS PASSWORD"
-                    response = str(clientSocket.recvfrom(2048)[0], "utf-8")
-                    print(f"Response: {response}")
-                    if response == "NEW USER LOGGED IN":
-                        enterUser = False
-                        goToWhile2 = True
-                        break
-                # IF given Username matches Server's files, then send Server the matching password
-                elif respStr == "VALID USERNAME":
-                    if ("ENTER PASSWORD" in currCmd) is False: # prevent password re-prompt
-                        password = str(input("Enter password: "))
-                        clientSocket.sendto(password.encode("utf-8"), ('localhost', serverPort))
-                        currCmd = "ENTER PASSWORD"
-                        print("I am at 'valid username 1'") ######################
+                else: # if resp = "VALID PASSWORD"
                     enterUser = False
-                    print("I am at 'valid username 2'") ######################
-                    currCmd = "ENTER PASSWORD"
-                    response = str(clientSocket.recvfrom(2048)[0], "utf-8")
-                    if response == "WRONG PASSWORD":
-                        print("Wrong password")
-                        enterUser = True
-                        continue
-                    else: # if resp = "VALID PASSWORD"
-                        enterUser = False
-                        goToWhile2 = True
-                        break
-
+                    goToWhile2 = True
+                    break
+        
+        except Exception as e:
+            # Upon socket.timeout()
+            if (str(e).rstrip()) == "timed out":
+                print("Server's packet timedout, retrying...")
+                print(f"Last currCmd value: {currCmd}")
+                continue
+            else:
+                print(f"e: {e}")
+        # Upon "ctrl + c"
         except KeyboardInterrupt:
             print("\nKilling client...")
+            goToWhile2 = False # just in case
             break
-        except: # except socket.timeout # doesnt work here idky
-            print("Server's packet timedout, retrying...")
-            print(f"Last currCmd value: {currCmd}")
-            fillerResp = str(clientSocket.recvfrom(2048)[0], "utf-8") # when msg is eventually sent, discard it
-            clientSocket.sendto("TIMEOUT RESTARTING".encode("utf-8"), ('localhost', serverPort))
-            continue
 
     # upon successful authentication, we can now enter forums
     if goToWhile2 is True:
