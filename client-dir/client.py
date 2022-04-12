@@ -1,19 +1,17 @@
 # Python Version: 3.8.10
 # Program written by z5361183
 # 10/04/22
-# Run; $ python3 client.py serverPort
+# Run: $ python3 client.py serverPort
 from socket import *
 import sys
 from datetime import datetime
 import time
 
+#####################
+#### Helper Fncs ####
+#####################
 ### List of Commands possible ###
 listOfCmds = ["CRT", "MSG", "DLT", "EDT", "LST", "RDT", "UPD", "DWN", "RMV", "XIT"]
-
-def XIT(clientSocket, serverPort, username):
-    clientSocket.sendto(f"XIT {username}".encode("utf-8"), ('localhost', int(serverPort)))
-    clientSocket.close()
-    sys.exit(f"Godspeed, {username}")
 
 # Break down user input into a format suitable for Command's processing
 def breakCmdInput(userInput):
@@ -28,12 +26,18 @@ def breakCmdInput(userInput):
         # combine all needed
         retInput = [str(brokenInput[0]), str(brokenInput[1]), str(newIn.rstrip())]
         return retInput
-    # ELSE, its one or two inputs (e.g "XIT" or "DLT 3331")
+    # ELSE, its just 1 or 2 or 3 inputs (e.g "XIT" or "DLT 3331" or "MSG 3331 hi!")
     return brokenInput
 
-# CMD 1: Server needs to create the thread with the given threadtitle
-def CRT(user, threadtitle):
-    pass
+# CMD 1: User wants to exit Forum
+def XIT(clientSocket, serverPort, username):
+    clientSocket.sendto(f"XIT {username}".encode("utf-8"), ('localhost', int(serverPort)))
+    clientSocket.close()
+    sys.exit(f'Adios, "{username}"')
+
+# CMD 1: Server needs to create the thread with the given threadtitle and username
+def CRT(clientSocket, serverPort, threadtitle, username):
+    clientSocket.sendto(f"CRT {threadtitle} {username}".encode("utf-8"), ('localhost', int(serverPort)))
 
 
 # let the OS pick a random Client Port -> "sock.bind(('localhost', 0))", selected port is in "sock.getsockname()"
@@ -45,47 +49,61 @@ if __name__ == "__main__":
         sys.exit('Execute program as such: $python3 client.py <server_port>')
 
     serverPort = int(sys.argv[1])
-    WAIT_TIME_NRML = 5 # wait time for non-image commands
-    WAIT_TIME_IMG = 15 # wait time for image transfers
+    WAIT_TIME_NRML = 0.7 # wait time for non-image commands
+    WAIT_TIME_IMG = 2 # wait time for image transfers
 
     clientSocket = socket(AF_INET, SOCK_DGRAM) # sock_dgram == UDP socket
     # Set the timeout time if packet is taking too long/lost
-    # clientSocket.settimeout(WAIT_TIME)
-
+    # clientSocket.settimeout(WAIT_TIME_NRML)
+    currCmd = ""
     while 1: # while loop 1 for logging onto server
-        goToWhile2 = False
-        username = str(input("Enter username: "))
-        # if username == "XIT": # only needed for debugging
-        #     XIT(clientSocket, serverPort)
-        # Send Username to Server
-        clientSocket.sendto(username.encode("utf-8"), ('localhost', serverPort))
-        # Wait for Server to respond with either "INVALID/VALID USERNAME"
-        response, serverAddress = clientSocket.recvfrom(2048)
-        respStr = (response.decode("utf-8")).strip()
-        # IF username doesn't exist, then prompt it again (i.e restart loop)
-        if respStr == "INVALID USERNAME":
-            print("Invalid username")
-            continue
-        # IF Server decides its gonna create this new user, then send Server a password from user
-        elif respStr == "NEW USERS PASSWORD":
-            password = str(input("Enter new password: "))
-            clientSocket.sendto(password.encode("utf-8"), ('localhost', serverPort))
-            # response = str(clientSocket.recvfrom(2048)[0], "utf-8")
-            goToWhile2 = True
-        # IF given Username matches Server's files, then send Server the matching password
-        elif respStr == "VALID USERNAME":
-            password = str(input("Enter password: "))
-            clientSocket.sendto(password.encode("utf-8"), ('localhost', serverPort))
-            response = str(clientSocket.recvfrom(2048)[0], "utf-8")
-            if response == "INVALID PASSWORD":
-                print("Invalid password")
+        # try-except block used for sockettimeout timer 
+        try:
+            goToWhile2 = False
+            username = str(input("Enter username: "))
+            clientSocket.sendto(username.encode("utf-8"), ('localhost', serverPort))
+            # Wait for Server to respond with either "WRONG/VALID USERNAME"
+            response, serverAddress = clientSocket.recvfrom(2048)
+            respStr = (response.decode("utf-8")).strip()
+            # IF username doesn't exist, then prompt it again (i.e restart loop)
+            if respStr == "WRONG USERNAME":
+                print("Wrong username")
                 continue
-            else: # if resp = "VALID PASSWORD"
-                goToWhile2 = True
+            # IF Server decides its gonna create this new user, then send Server a password from user
+            elif respStr == "NEW USERS PASSWORD":
+                password = str(input("Enter new password: "))
+                clientSocket.sendto(password.encode("utf-8"), ('localhost', serverPort))
+                response = str(clientSocket.recvfrom(2048)[0], "utf-8")
+                print(f"Response: {response}")
+                if response == "NEW USER LOGGED IN":
+                    goToWhile2 = True
+                    break
+            # IF given Username matches Server's files, then send Server the matching password
+            elif respStr == "VALID USERNAME":
+                password = str(input("Enter password: "))
+                clientSocket.sendto(password.encode("utf-8"), ('localhost', serverPort))
+                currCmd = "ENTER PASSWORD" 
+                response = str(clientSocket.recvfrom(2048)[0], "utf-8")
+                if response == "WRONG PASSWORD":
+                    print("Wrong password")
+                    continue
+                else: # if resp = "VALID PASSWORD"
+                    goToWhile2 = True
+                    break
 
-        # upon successful authentication, we can now enter forums
-        if goToWhile2 is True:
-            print("====================\nWelcome to the forum\n====================")
+        except KeyboardInterrupt:
+            print("\nKilling client...")
+            break
+        except: # except socket.timeout # doesnt work here idky
+            print("Server's packet timedout, restarting...")
+            fillerResp = str(clientSocket.recvfrom(2048)[0], "utf-8") # when msg is eventually sent, discard it
+            clientSocket.sendto("TIMEOUT RESTARTING".encode("utf-8"), ('localhost', serverPort))
+            continue
+
+    # upon successful authentication, we can now enter forums
+    if goToWhile2 is True:
+        print("====================\nWelcome to the forum\n====================")
+        try: 
             while 1:
                 cmdInput = str(input("Enter one of the following commands: CRT, MSG, DLT, EDT, LST, RDT, UPD, DWN, RMV, XIT: "))
                 # break down cmdInput into a list of args 
@@ -95,7 +113,10 @@ if __name__ == "__main__":
                     continue
                 elif cmdList[0] == "CRT":
                     # Include CRT-specific error checking !!
-                    # CRT(cmdList[1])
+                    if len(cmdList) != 2: # should only be "CRT <title>"
+                        print("Incorrect syntax for CRT")
+                    else:
+                        CRT(cmdList[1])
                     pass
                 elif cmdList[0] == "MSG":
                     pass
@@ -107,16 +128,27 @@ if __name__ == "__main__":
                     pass
                 elif cmdList[0] == "RDT":
                     pass
+                elif cmdList[0] == "RMV":
+                    pass
                 elif cmdList[0] == "UPD":
+                    # Tell Server to open TCP connection, then do file transfer
+                    # once done, close TCP connection
                     pass
                 elif cmdList[0] == "DWN":
-                    pass
-                elif cmdList[0] == "RMV":
+                    # Tell Server to open TCP connection, then do file transfer
+                    # once done, close TCP connection
                     pass
                 elif cmdList[0] == "XIT":
                     if len(cmdList) != 1:
-                        print("Invalid syntax for XIT")
+                        print("WRONG syntax for XIT")
                     else:
                         XIT(clientSocket, serverPort, username)
+        except KeyboardInterrupt:
+            XIT(clientSocket, serverPort, username)
+        # socket timeout
+        # except:
+        #     print("Server's packet timedout, please retry...")
+        #     clientSocket.sendto("TIMEOUT RESTARTING".encode("utf-8"), ('localhost', serverPort))
+        #     continue
 
     clientSocket.close()
