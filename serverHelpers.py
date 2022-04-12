@@ -6,6 +6,9 @@ import sys
 from datetime import datetime
 import time
 
+#################
+### MISC Fncs ###
+#################
 
 # Wipes the whole data store clean (used when Server is killed)
 def dataStoreClear():
@@ -91,3 +94,14 @@ def breakCmdMsg(clientMsg):
         return retMsg
     # ELSE, its one or two inputs (e.g "XIT" or "DLT 3331")
     return brokenMsg
+
+
+#################
+### CMDS fncs ###
+#################
+
+# deez
+def CRT(arg1, arg2, arg3, arg4):
+    pass
+
+# deez

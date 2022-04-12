@@ -18,15 +18,6 @@ dataStore = {
 ### Helper Fncs ###
 ###################
 
-# Checks whether a timeout has happened (comparing last two args)
-# if so, iterator is reset to 0, so first IF statement runs, which matches with Client's prompt to user for username
-# Server then expects ClientMsg with username
-def checkTimeoutWhile2(clientMsg):
-    # if (clientMsg in expectedMsgList) is False: # then timeout has happened, Client is going to send username
-    if clientMsg == "TIMEOUT RESTARTING":
-        return True
-    else:
-        return False 
 
 #################
 ### CMDS fncs ###
