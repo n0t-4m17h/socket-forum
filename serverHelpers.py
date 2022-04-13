@@ -2,6 +2,7 @@
 # File for Server.py 's helper fncs
 from server import *
 from socket import *
+import os
 import sys
 from datetime import datetime
 import time
@@ -100,8 +101,29 @@ def breakCmdMsg(clientMsg):
 ### CMDS fncs ###
 #################
 
-# deez
-def CRT(arg1, arg2, arg3, arg4):
-    pass
-
+# Fnc first checks if CRT threadtitle already exists, If so, returns False
+# IF not, file is created, returns True
+def CRT(threadtitle, username):
+    # FIRST check CWD for <threadtitle>
+    try:
+        f = open(f"{threadtitle}")
+        f.close()
+        return False # If exception isnt raised, that means a file with that title already exists
+    except FileNotFoundError:
+        # since File does NOT exist, we can continue
+        threadID = len(dataStore['threads']) + 1 # start at '1'
+        # Store all thread-related information to data store
+        dataStore['threads'].append({
+            "threadtitle": threadtitle,
+            "threadID": threadID,
+            "threadOwner": username,
+            "threadMembers": [username],
+            "threadMsgs": []
+        })
+        # Now add file to Server's CWD
+        f = open(f"{threadtitle}", "w") # "w" creates file if it doesnt exist
+        f.write(f"{username}")
+        f.close()
+        return True
+    
 # deez

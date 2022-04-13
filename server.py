@@ -4,6 +4,7 @@
 # Run: $ python3 server.py serverPort 
 from serverHelpers import *
 from socket import *
+import os
 import sys
 from datetime import datetime
 import time
@@ -23,9 +24,8 @@ dataStore = {
 ### CMDS fncs ###
 #################
 
-# check if CRT thread already exists
-def CRTisOK(username, threadtitle):
-    # check CWD for <threadtitle>
+# deez
+def RMV():
     pass
 
 ##################
@@ -36,13 +36,13 @@ if __name__ == "__main__":
         sys.exit("Execute program as such: $python3 server.py <server_port>")
     dataStoreClear()
     serverPort = int(sys.argv[1])
-    WAIT_TIME_NRML = 15 # wait time for non-image commands
+    WAIT_TIME_AUTH = 20 # wait time for authentication stage 
+    WAIT_TIME_CMDS = 30 # for CMDs-input stage (NOTE: not good, cause User needs more time to read a thread for e.g)
     WAIT_TIME_IMG = 30 # wait time for image transfers
 
     serverSocket = socket(AF_INET, SOCK_DGRAM) 
     serverSocket.bind(('localhost', serverPort))
     # serverSocket.listen(1) # only for TCP ??
-    serverSocket.settimeout(WAIT_TIME_NRML)
 
     while 1: # while loop 1 for Server's infinite loop
         try:
@@ -54,6 +54,7 @@ if __name__ == "__main__":
             currCmd = ""
             userOnline = True
             while userOnline: # while loop 2 for authenticating
+                serverSocket.settimeout(WAIT_TIME_AUTH) # Assuming user enters Auth-cmds within 20secs
                 # messagePass, clientAddr = serverSocket.recvfrom(2048)
                 try:
                     if i == 0: # this is Just for the first loop ONLY
@@ -117,49 +118,64 @@ if __name__ == "__main__":
 
                     checkForNewUserIter = 0 # reset this for the next Client ??
                     while 1: # while loop 3 for normal COMMANDS (after logging in)
-                        # request msg from Client, and break it down via its formatting ("<cmd> <arg1> <arg2")
-                        cmdMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
-                        cmdMsgBroken = breakCmdMsg(cmdMsg)
-                        if cmdMsgBroken[0] == "XIT":
-                            changeUserActive(username, False)
-                            print(f'"{username}" exited\n')
-                            userOnline = False # this'll break the 2nd while loop, making Server now wait for clients
-                            break
-                        elif cmdMsgBroken[0] == "CRT":
-                            # if (CRTisOk(cmdMsgBroken[1], cmdMsgBroken[2])) is True:
-                                # CRT(cmdMsgBroken[1], cmdMsgBroken[2])
-                                # serverSocket.sendto("CRT SUCCESS".encode("utf-8"), clientAddr)
-                            # else:
-                                # serverSocket.sendto("CRT FAIL".encode("utf-8"), clientAddr)
-                            pass
-                        elif cmdMsgBroken[0] == "MSG":
-                            pass
-                        elif cmdMsgBroken[0] == "DLT":
-                            pass
-                        elif cmdMsgBroken[0] == "EDT":
-                            pass
-                        elif cmdMsgBroken[0] == "LST":
-                            pass
-                        elif cmdMsgBroken[0] == "RDT":
-                            pass
-                        elif cmdMsgBroken[0] == "UPD":
-                            pass
-                        elif cmdMsgBroken[0] == "DWN":
-                            pass
-                        elif cmdMsgBroken[0] == "RMV":
-                            pass
-                        
+                        try:
+                            serverSocket.settimeout(WAIT_TIME_CMDS) # Assuming user enters a CMD within 30secs
+                            # request msg from Client, and break it down via its formatting ("<cmd> <arg1>...<argX>")
+                            currCmd = "WAITING FOR CMD"
+                            cmdMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
+                            cmdMsgBroken = breakCmdMsg(cmdMsg)
+                            if cmdMsgBroken[0] == "XIT":
+                                currCmd = "XIT"
+                                changeUserActive(username, False)
+                                print(f'"{username}" exited\n')
+                                userOnline = False # this'll break the 2nd while loop, making Server now wait for clients
+                                break
+                            elif cmdMsgBroken[0] == "CRT":
+                                print(f'"{username}" issued CRT command')
+                                currCmd = "CRT"
+                                if CRT(cmdMsgBroken[1], cmdMsgBroken[2]) is True:
+                                    serverSocket.sendto("CRT SUCCESS".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" created thread "{cmdMsgBroken[1]}"!')
+                                else:
+                                    serverSocket.sendto("CRT TITLE TAKEN".encode("utf-8"), clientAddr)
+                                    print(f'Failed to create "{username}"s thread "{cmdMsgBroken[1]}"')
+                            elif cmdMsgBroken[0] == "MSG":
+                                pass
+                            elif cmdMsgBroken[0] == "DLT":
+                                pass
+                            elif cmdMsgBroken[0] == "EDT":
+                                pass
+                            elif cmdMsgBroken[0] == "LST":
+                                # when sending Thread's contents to Client, have a "\n" for every newline
+                                pass
+                            elif cmdMsgBroken[0] == "RDT":
+                                pass
+                            elif cmdMsgBroken[0] == "RMV":
+                                pass
+                            elif cmdMsgBroken[0] == "UPD":
+                                pass
+                            elif cmdMsgBroken[0] == "DWN":
+                                pass
+                        # while 3's try-excepts
+                        except Exception as e:
+                            # Upon socket.timeout()
+                            if (str(e).rstrip()) == "timed out":
+                                print("Client's packet timed out, retrying...")
+                                # print(f"Last currCmd value: {currCmd}") # FOR DEBUGGING
+                                continue
+                        # Upon "ctrl + c"
+                        except KeyboardInterrupt:
+                            killServer(serverSocket)
                 # while 2's try-excepts
                 except Exception as e:
                     # Upon socket.timeout()
                     if (str(e).rstrip()) == "timed out":
                         print("Client's packet timed out, retrying...")
-                        # print(f"Last currCmd value: {currCmd}")
+                        print(f"Last currCmd value: {currCmd}") # FOR DEBUGGING
                         continue
                 # Upon "ctrl + c"
                 except KeyboardInterrupt:
                     killServer(serverSocket)
-        
         # while 1's try-excepts
         except Exception as e:
             # Upon socket.timeout()
@@ -167,6 +183,7 @@ if __name__ == "__main__":
                 print("Client's packet timed out, retrying...")
                 continue
             else:
-                print(f"e: {e}")
+                print(f"ERROR: {e}")
+                continue
         except KeyboardInterrupt:
             killServer(serverSocket)

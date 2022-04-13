@@ -3,12 +3,12 @@
 dataStore = {
     'users': [
         {
-            'username': "",
+            'username': "user2",
             'password': "",
             'isActive': True
         },
         {
-            'username': "",
+            'username': "user2",
             'password': "",
             'isActive': False
         }
@@ -17,16 +17,17 @@ dataStore = {
         {
             'threadtitle': "",
             'threadID': 1,  # not needed??
-            'threadMembers': [], # not needed??
+            'threadOwner': "user1",
+            'threadMembers': ["user1", "user2"], # not needed??
             'threadMsgs': [
                 {
                     'msgID': 1,
-                    'msgUsername': "",
+                    'msgUser': "user1",
                     'msg': "", 
                 },
                 {
                     'msgID': 2,
-                    'msgUsername': "",
+                    'msgUser': "user2",
                     'msg': "", 
                 }
             ]
@@ -34,11 +35,12 @@ dataStore = {
         {
             'threadtitle': "",
             'threadID': 2,
-            'threadMembers': [],
+            'threadOwner': "user1",
+            'threadMembers': ["user1"],
             'threadMsgs': [
                 {
                     'msgID': 1,
-                    'msgUsername': "",
+                    'msgUsername': "user1",
                     'msg': "", 
                 }
             ]

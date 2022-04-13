@@ -4,6 +4,7 @@
 # Run: $ python3 client.py serverPort
 from socket import *
 import sys
+import os
 from datetime import datetime
 import time
 
@@ -12,6 +13,11 @@ import time
 #####################
 ### List of Commands possible ###
 listOfCmds = ["CRT", "MSG", "DLT", "EDT", "LST", "RDT", "UPD", "DWN", "RMV", "XIT"]
+
+# Globally change currCmd value (for socket.timeout issues) (workaround of using pointers)
+def currCmdEquals(string):
+    global currCmd
+    currCmd = string
 
 # Break down user input into a format suitable for Command's processing
 def breakCmdInput(userInput):
@@ -29,15 +35,28 @@ def breakCmdInput(userInput):
     # ELSE, its just 1 or 2 or 3 inputs (e.g "XIT" or "DLT 3331" or "MSG 3331 hi!")
     return brokenInput
 
+###################
+#### CMDs Fncs ####
+###################
+
 # CMD 1: User wants to exit Forum
 def XIT(clientSocket, serverPort, username):
     clientSocket.sendto(f"XIT {username}".encode("utf-8"), ('localhost', int(serverPort)))
     clientSocket.close()
     sys.exit(f'Adios, "{username}"')
 
-# CMD 1: Server needs to create the thread with the given threadtitle and username
-def CRT(clientSocket, serverPort, threadtitle, username):
-    clientSocket.sendto(f"CRT {threadtitle} {username}".encode("utf-8"), ('localhost', int(serverPort)))
+# CMD 2: Server needs to create the thread with the given threadtitle and username
+def CRT(clientSocket, serverPort, threadtitle, username, currCmd):
+    # print(f"Before: {currCmd}")
+    if ("CRT RESPONSE" in currCmd) is False: # this allows Client to skip sending and go waiting for Packet, incase of socket.timeout
+        clientSocket.sendto(f"CRT {threadtitle} {username}".encode("utf-8"), ('localhost', int(serverPort)))
+    currCmdEquals("CMD INPUTTED WAITING CRT RESPONSE")
+    # print(f"After: {currCmd}")
+    resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+    if "TITLE TAKEN" in resp:
+        return False
+    else:
+        return True
 
 
 # let the OS pick a random Client Port -> "sock.bind(('localhost', 0))", selected port is in "sock.getsockname()"
@@ -47,7 +66,8 @@ def CRT(clientSocket, serverPort, threadtitle, username):
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit('Execute program as such: $python3 client.py <server_port>')
-
+    global currCmd
+    currCmd = ""
     serverPort = int(sys.argv[1])
     WAIT_TIME_NRML = 0.7 # wait time for non-image commands
     WAIT_TIME_IMG = 2 # wait time for image transfers
@@ -58,6 +78,7 @@ if __name__ == "__main__":
     currCmd = ""
     enterUser = True
     respStr = ""
+    currUsername = "" # save curr User's username for CMDs section
     while 1: # while loop 1 for logging onto server
         # try-except block used for sockettimeout timer 
         try:
@@ -81,9 +102,10 @@ if __name__ == "__main__":
                     clientSocket.sendto(password.encode("utf-8"), ('localhost', serverPort))
                     currCmd = "NEW USERS PASSWORD"
                 currCmd = "NEW USERS PASSWORD"
-                response = str(clientSocket.recvfrom(2048)[0], "utf-8")
+                response = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
                 if response == "NEW USER LOGGED IN":
                     enterUser = False
+                    currUsername = username
                     goToWhile2 = True
                     break
             # IF given Username matches Server's files, then send Server the matching password
@@ -101,6 +123,7 @@ if __name__ == "__main__":
                     continue
                 else: # if resp = "VALID PASSWORD"
                     enterUser = False
+                    currUsername = username
                     goToWhile2 = True
                     break
         
@@ -121,11 +144,13 @@ if __name__ == "__main__":
     # upon successful authentication, we can now enter forums
     if goToWhile2 is True:
         print("====================\nWelcome to the forum\n====================")
-        try: 
-            while 1:
-                cmdInput = str(input("Enter one of the following commands: CRT, MSG, DLT, EDT, LST, RDT, UPD, DWN, RMV, XIT: "))
-                # break down cmdInput into a list of args 
-                cmdList = breakCmdInput(cmdInput) # cmdList[0] is the cmd, [1] is 2nd, and [3] is final arg
+        while 1: 
+            try:
+                # This IF is for cases when timeout occurs and CMD input already occurred
+                if ("CMD INPUTTED" in currCmd) is False:
+                    cmdInput = str(input("Enter one of the following commands: CRT, MSG, DLT, EDT, LST, RDT, UPD, DWN, RMV, XIT: "))
+                    # break down cmdInput into a list of args 
+                    cmdList = breakCmdInput(cmdInput) # cmdList[0] is the cmd, [1] is 2nd, and [3] is final arg
                 if (cmdList[0] in listOfCmds) is False:
                     print("Invalid command")
                     continue
@@ -133,9 +158,19 @@ if __name__ == "__main__":
                     # Include CRT-specific error checking !!
                     if len(cmdList) != 2: # should only be "CRT <title>"
                         print("Incorrect syntax for CRT")
+                        continue
                     else:
-                        CRT(cmdList[1])
-                    pass
+                        ret = CRT(clientSocket, serverPort, cmdList[1], currUsername, currCmd)
+                        if ret == False:
+                            print("Threadtitle taken, please try again...")
+                            currCmdEquals("ENTER CMD")
+                            continue
+                        else:
+                            print(f'Thread "{cmdList[1]}" created!')
+                            currCmdEquals("ENTER CMD")
+                            continue
+                        # print(f"Finally: {currCmd}")
+
                 elif cmdList[0] == "MSG":
                     pass
                 elif cmdList[0] == "DLT":
@@ -161,12 +196,18 @@ if __name__ == "__main__":
                         print("WRONG syntax for XIT")
                     else:
                         XIT(clientSocket, serverPort, username)
-        except KeyboardInterrupt:
-            XIT(clientSocket, serverPort, username)
-        # socket timeout
-        # except:
-        #     print("Server's packet timedout, please retry...")
-        #     clientSocket.sendto("TIMEOUT RESTARTING".encode("utf-8"), ('localhost', serverPort))
-        #     continue
+        
+            except Exception as e:
+                # Upon socket.timeout()
+                if (str(e).rstrip()) == "timed out":
+                    print("Server's packet timedout, retrying...")
+                    # print(f"Last currCmd value: {currCmd}") # ONLY FOR DEBUGGING
+                    continue
+                else:
+                    print(f"ERROR: {e}")
+                    continue
+            # Upon "ctrl + c"
+            except KeyboardInterrupt:
+                XIT(clientSocket, serverPort, username)
 
     clientSocket.close()

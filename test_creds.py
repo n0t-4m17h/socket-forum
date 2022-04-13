@@ -1,6 +1,7 @@
 # For testing certain file-stuff (and more!) in a smaller environment
 
 from socket import *
+import os
 import sys
 from datetime import datetime
 import time
@@ -48,8 +49,24 @@ def appendToEOF(stringToAppend):
     f.close()
     print(f"Appended [{stringToAppend}] to file")
 
+def CRT(username, title):
+    try:
+        open(f"{title}")
+        print("File found cuh")
+    except FileNotFoundError:
+        print("File NOT found cuh, gonna create it")
+        f = open(f"{title}", "w")
+        f.write(f"{username}")
+        f.close()
+
+    # for files in os.listdir('.'):
+    #     print(files)
+    # pass
 
 if __name__ == "__main__":
+    # scan CWD for file of same name
+    # if not
+    CRT("hans", "3331")
 
     # print("Going to open cred.txt file: ")
     # truth = usernameExists("hans")
