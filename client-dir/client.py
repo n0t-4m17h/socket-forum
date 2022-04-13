@@ -58,6 +58,22 @@ def CRT(clientSocket, serverPort, threadtitle, username, currCmd):
     else:
         return True
 
+# CMD 2:
+def RMV():
+    pass
+
+# CMD 3:
+def MSG(clientSocket, serverPort, threadtitle, msg, currCmd):
+    if ("MSG RESPONSE" in currCmd) is False: # this allows Client to skip sending and go waiting for Packet, incase of socket.timeout
+        # skip the {username} for this one, so we dont need to change breakCmdInput()
+        clientSocket.sendto(f"MSG {threadtitle} {msg}".encode("utf-8"), ('localhost', int(serverPort)))
+    currCmdEquals("CMD INPUTTED WAITING MSG RESPONSE")
+    # print(f"After: {currCmd}")
+    resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+    if "TITLE INVALID" in resp:
+        return False
+    else:
+        return True
 
 # let the OS pick a random Client Port -> "sock.bind(('localhost', 0))", selected port is in "sock.getsockname()"
 ##################
@@ -149,15 +165,19 @@ if __name__ == "__main__":
                 # This IF is for cases when timeout occurs and CMD input already occurred
                 if ("CMD INPUTTED" in currCmd) is False:
                     cmdInput = str(input("Enter one of the following commands: CRT, MSG, DLT, EDT, LST, RDT, UPD, DWN, RMV, XIT: "))
+                    currCmdEquals("CMD INPUTTED")
                     # break down cmdInput into a list of args 
                     cmdList = breakCmdInput(cmdInput) # cmdList[0] is the cmd, [1] is 2nd, and [3] is final arg
                 if (cmdList[0] in listOfCmds) is False:
                     print("Invalid command")
+                    currCmdEquals("ENTER CMD")
                     continue
+                # CRT
                 elif cmdList[0] == "CRT":
                     # Include CRT-specific error checking !!
                     if len(cmdList) != 2: # should only be "CRT <title>"
                         print("Incorrect syntax for CRT")
+                        currCmdEquals("ENTER CMD")
                         continue
                     else:
                         ret = CRT(clientSocket, serverPort, cmdList[1], currUsername, currCmd)
@@ -169,28 +189,52 @@ if __name__ == "__main__":
                             print(f'Thread "{cmdList[1]}" created!')
                             currCmdEquals("ENTER CMD")
                             continue
-                        # print(f"Finally: {currCmd}")
-
+                # MSG
                 elif cmdList[0] == "MSG":
-                    pass
+                    # Remove any whitespace included, mistakingly leads to extra args (for e.g. "MSG 3331 " instead of "MSG 3331")
+                    for i in cmdList:
+                        if i == '':
+                            cmdList.remove(i)
+                    if len(cmdList) != 3: # should only be "MSG <title> '<arg1>...<argX>'", everything after <title> is grouped as one string
+                        print("Incorrect syntax for MSG")
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    else:
+                        ret = MSG(clientSocket, serverPort, cmdList[1], cmdList[2], currCmd)
+                        if ret == False:
+                            print("Invalid threadtitle, please try again...")
+                            currCmdEquals("ENTER CMD")
+                            continue
+                        else:
+                            print(f'Message sent in thread "{cmdList[1]}"')
+                            currCmdEquals("ENTER CMD")
+                            continue
+                # DLT
                 elif cmdList[0] == "DLT":
                     pass
+                # EDT
                 elif cmdList[0] == "EDT":
                     pass
+                # LST
                 elif cmdList[0] == "LST":
                     pass
+                # RDT
                 elif cmdList[0] == "RDT":
                     pass
+                # RMV
                 elif cmdList[0] == "RMV":
                     pass
+                # UPD
                 elif cmdList[0] == "UPD":
                     # Tell Server to open TCP connection, then do file transfer
                     # once done, close TCP connection
                     pass
+                # DWN
                 elif cmdList[0] == "DWN":
                     # Tell Server to open TCP connection, then do file transfer
                     # once done, close TCP connection
                     pass
+                # XIT
                 elif cmdList[0] == "XIT":
                     if len(cmdList) != 1:
                         print("WRONG syntax for XIT")

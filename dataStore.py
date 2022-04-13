@@ -1,6 +1,34 @@
-# An example of the Data Structure used in Server.py
+# File that holds Sever.py's data structure class for storing all info, an example is down below
+# Python Version: 3.8.10
+# Program written by z5361183
+# 10/04/22
 
-dataStore = {
+initial_object = {
+    'users': [],
+    'threads': []
+}
+class Datastore:
+    def __init__(self):
+        # Initialise data store to empty, as whats above
+        self.__store = initial_object
+
+    def get(self):
+        # retrieve curr data from data store
+        return self.__store
+
+    def set(self, store):
+        # Overwites datastore with new data
+        self.__store = store
+
+global data_store
+data_store = Datastore()
+
+
+#####
+## An example of the Data Structure used in Server.py
+#####
+'''
+data_store = {
     'users': [
         {
             'username': "user2",
@@ -47,3 +75,4 @@ dataStore = {
         }
     ]
 }
+'''

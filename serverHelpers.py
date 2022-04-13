@@ -1,5 +1,8 @@
 # Python Version: 3.8.10
 # File for Server.py 's helper fncs
+# from server import *
+# import server as server
+from dataStore import data_store
 from server import *
 from socket import *
 import os
@@ -13,10 +16,12 @@ import time
 
 # Wipes the whole data store clean (used when Server is killed)
 def dataStoreClear():
-    dataStore['users'] = []
-    dataStore['threads'] = []
+    store = data_store.get()
+    store['users'] = []
+    store['threads'] = []
+    data_store.set(store)
 
-# Exits program, called for ctrl+C detection
+# Exits program smoothly, called for ctrl+C detection
 def killServer(serverSocket):
     dataStoreClear()
     serverSocket.close()    
@@ -45,7 +50,7 @@ def checkUserPassCombo(username, password):
     for i in range(0, numLinesF):
         brokenLogin = allLinesF[i].split(" ")
         user = brokenLogin[0].rstrip()
-        passW = brokenLogin[1].rstrip()
+        passW = brokenLogin[1].rstrip() # remove trailing newlines
         if (username == user and password == passW):
             f.close()
             return True # combo is valid
@@ -55,9 +60,11 @@ def checkUserPassCombo(username, password):
 # Creates a new user data-struct (Upon detection of a new login) + adds user deets to data store
 # AND adds user to credentials.txt IF it's new
 def createNewUser(username, password, isActive, isNewUser):
+    store = data_store.get()
     userStruct = {"username": username, "password": password, "isActive": isActive}
-    dataStore['users'].append(userStruct)
-    changeUserActive(username, True)
+    store['users'].append(userStruct)
+    data_store.set(store)
+    # server.changeUserActive(username, True)
     if isNewUser == True: # user is not in credentials.txt yet
         f = open("credentials.txt", "a") # append new user deets to end of file
         strToAppend = "\n" + f"{username}" + f" {password}" # whitespace included before passW
@@ -66,16 +73,19 @@ def createNewUser(username, password, isActive, isNewUser):
 
 # Make user online or offline
 def changeUserActive(username, isActive):
-    for users in dataStore['users']:
+    store = data_store.get()
+    for users in store['users']:
         if users["username"] == username:
-            users["isActive"] == isActive
+            users["isActive"] = isActive
+            data_store.set(store)
             return
 
 # Returns the whether User is logged in rn or not, if User isn't found, returns None
 # Used to prevent multiple logins of the same user
 def isUserActive(username):
+    store = data_store.get()
     # assumes "username" is valid
-    for users in dataStore['users']:
+    for users in store['users']:
         if users['username'] == username:
             return users['isActive']
     return None
@@ -93,7 +103,7 @@ def breakCmdMsg(clientMsg):
         # combine all needed
         retMsg = [str(brokenMsg[0]), str(brokenMsg[1]), str(newMsg.rstrip())]
         return retMsg
-    # ELSE, its one or two inputs (e.g "XIT" or "DLT 3331")
+    # ELSE, its one or two or three inputs (e.g "XIT" or "DLT 3331" or "MSG 3331 hi!")
     return brokenMsg
 
 
@@ -104,6 +114,7 @@ def breakCmdMsg(clientMsg):
 # Fnc first checks if CRT threadtitle already exists, If so, returns False
 # IF not, file is created, returns True
 def CRT(threadtitle, username):
+    store = data_store.get()
     # FIRST check CWD for <threadtitle>
     try:
         f = open(f"{threadtitle}")
@@ -111,19 +122,55 @@ def CRT(threadtitle, username):
         return False # If exception isnt raised, that means a file with that title already exists
     except FileNotFoundError:
         # since File does NOT exist, we can continue
-        threadID = len(dataStore['threads']) + 1 # start at '1'
+        threadID = len(store['threads']) + 1 # start at '1'
         # Store all thread-related information to data store
-        dataStore['threads'].append({
+        store['threads'].append({
             "threadtitle": threadtitle,
             "threadID": threadID,
             "threadOwner": username,
             "threadMembers": [username],
             "threadMsgs": []
         })
+        data_store.set(store)
         # Now add file to Server's CWD
         f = open(f"{threadtitle}", "w") # "w" creates file if it doesnt exist
         f.write(f"{username}")
         f.close()
         return True
-    
+
 # deez
+def RMV():
+    pass
+
+# Fnc assumes file already exists (but still checks for file in Server side)
+# Writes user's message to file, and stores it in data store correspondingly.  
+def MSG(threadtitle, msg, username):
+    store = data_store.get()
+    try:
+        f = open(f"{threadtitle}", "r") # First grab the no. of lines via readlines() by "r" mode
+        allLinesF = f.readlines()
+        f.close()
+        msgID = len(allLinesF)
+        msgToAppend = f"\n{msgID} {username}: {msg}"
+        f = open(f"{threadtitle}", "a") # open for appending
+        f.write(msgToAppend)
+        f.close()
+        msgMeta = {
+            'msgID': msgID,
+            'msgUser': username,
+            'msg': msg, 
+        }
+        for threads in store['threads']:
+            if threads['threadtitle'] == threadtitle:
+                threads['threadMsgs'].append(msgMeta)
+                # also add msg-User to 'members' if not already in thread
+                if (username in threads['threadMembers']) is False:
+                    threads['threadMembers'].append(username) 
+        data_store.set(store)
+        return True
+    except FileNotFoundError:
+        return False
+
+# deez
+def RDT():
+    pass

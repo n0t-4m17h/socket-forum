@@ -3,22 +3,12 @@
 # 10/04/22
 # Run: $ python3 server.py serverPort 
 from serverHelpers import *
+from dataStore import data_store
 from socket import *
 import os
 import sys
 from datetime import datetime
 import time
-
-### Main Data Structure ###
-dataStore = {
-    'users': [],
-    'threads': []
-}
-
-###################
-### Helper Fncs ###
-###################
-
 
 #################
 ### CMDS fncs ###
@@ -34,7 +24,6 @@ def RMV():
 if __name__ == "__main__":
     if (len(sys.argv) != 2):
         sys.exit("Execute program as such: $python3 server.py <server_port>")
-    dataStoreClear()
     serverPort = int(sys.argv[1])
     WAIT_TIME_AUTH = 20 # wait time for authentication stage 
     WAIT_TIME_CMDS = 30 # for CMDs-input stage (NOTE: not good, cause User needs more time to read a thread for e.g)
@@ -120,42 +109,62 @@ if __name__ == "__main__":
                     while 1: # while loop 3 for normal COMMANDS (after logging in)
                         try:
                             serverSocket.settimeout(WAIT_TIME_CMDS) # Assuming user enters a CMD within 30secs
-                            # request msg from Client, and break it down via its formatting ("<cmd> <arg1>...<argX>")
+                            # request msg from Client, and break it down via "<cmd> <arg1>...<argX>"
                             currCmd = "WAITING FOR CMD"
                             cmdMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
                             cmdMsgBroken = breakCmdMsg(cmdMsg)
+                            # XIT
                             if cmdMsgBroken[0] == "XIT":
                                 currCmd = "XIT"
                                 changeUserActive(username, False)
-                                print(f'"{username}" exited\n')
+                                print(f'"{username}" EXITED\n')
                                 userOnline = False # this'll break the 2nd while loop, making Server now wait for clients
                                 break
+                            # CRT
                             elif cmdMsgBroken[0] == "CRT":
                                 print(f'"{username}" issued CRT command')
                                 currCmd = "CRT"
+                                # Pass in threadtitle then username
                                 if CRT(cmdMsgBroken[1], cmdMsgBroken[2]) is True:
                                     serverSocket.sendto("CRT SUCCESS".encode("utf-8"), clientAddr)
-                                    print(f'"{username}" created thread "{cmdMsgBroken[1]}"!')
+                                    print(f'"{username}" created THREAD "{cmdMsgBroken[1]}"!')
                                 else:
                                     serverSocket.sendto("CRT TITLE TAKEN".encode("utf-8"), clientAddr)
-                                    print(f'Failed to create "{username}"s thread "{cmdMsgBroken[1]}"')
+                                    print(f'Failed to create "{username}"s THREAD "{cmdMsgBroken[1]}"')
+                            # MSG
                             elif cmdMsgBroken[0] == "MSG":
-                                pass
+                                print(f'"{username}" issued MSG command')
+                                currCmd = "MSG"
+                                # Pass in threadtitle then 'msg'
+                                if MSG(cmdMsgBroken[1], cmdMsgBroken[2], username) is True:
+                                    serverSocket.sendto("MSG SUCCESS".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" sent a MESSAGE in thread "{cmdMsgBroken[1]}"!')
+                                else:
+                                    serverSocket.sendto("MSG TITLE INVALID".encode("utf-8"), clientAddr)
+                                    print(f'Failed to send "{username}"s MESSAGE to thread "{cmdMsgBroken[1]}"')
+                            # DLT
                             elif cmdMsgBroken[0] == "DLT":
                                 pass
+                            # EDT
                             elif cmdMsgBroken[0] == "EDT":
                                 pass
+                            # LST
                             elif cmdMsgBroken[0] == "LST":
                                 # when sending Thread's contents to Client, have a "\n" for every newline
                                 pass
+                            # RDT
                             elif cmdMsgBroken[0] == "RDT":
                                 pass
+                            # RMV
                             elif cmdMsgBroken[0] == "RMV":
                                 pass
+                            # UPD
                             elif cmdMsgBroken[0] == "UPD":
                                 pass
+                            # DWN
                             elif cmdMsgBroken[0] == "DWN":
                                 pass
+                        
                         # while 3's try-excepts
                         except Exception as e:
                             # Upon socket.timeout()
@@ -166,6 +175,7 @@ if __name__ == "__main__":
                         # Upon "ctrl + c"
                         except KeyboardInterrupt:
                             killServer(serverSocket)
+                
                 # while 2's try-excepts
                 except Exception as e:
                     # Upon socket.timeout()
@@ -176,6 +186,7 @@ if __name__ == "__main__":
                 # Upon "ctrl + c"
                 except KeyboardInterrupt:
                     killServer(serverSocket)
+        
         # while 1's try-excepts
         except Exception as e:
             # Upon socket.timeout()
