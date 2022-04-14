@@ -14,9 +14,7 @@ import time
 ### CMDS fncs ###
 #################
 
-# deez
-def RMV():
-    pass
+
 
 ##################
 #### MAIN Fnc ####
@@ -104,12 +102,14 @@ if __name__ == "__main__":
                             serverSocket.sendto("NEW USER LOGGED IN".encode("utf-8"), clientAddr)
                             print(f'"{username}" successful login!')
                             # code now jumps to 3rd while loop, in 3 lines
-
+                    # currCmd = "WAITING FOR CMD" # to pass next IF
                     checkForNewUserIter = 0 # reset this for the next Client ??
                     while 1: # while loop 3 for normal COMMANDS (after logging in)
                         try:
                             serverSocket.settimeout(WAIT_TIME_CMDS) # Assuming user enters a CMD within 30secs
                             # request msg from Client, and break it down via "<cmd> <arg1>...<argX>"
+                            # # This IF prevents waiting for CMD, incases of socket timeout
+                            # # if "WAITING FOR CMD" in currCmd:
                             currCmd = "WAITING FOR CMD"
                             cmdMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
                             cmdMsgBroken = breakCmdMsg(cmdMsg)
@@ -131,6 +131,21 @@ if __name__ == "__main__":
                                 else:
                                     serverSocket.sendto("CRT TITLE TAKEN".encode("utf-8"), clientAddr)
                                     print(f'Failed to create "{username}"s THREAD "{cmdMsgBroken[1]}"')
+                            # RMV
+                            elif cmdMsgBroken[0] == "RMV":
+                                print(f'"{username}" issued RMV command')
+                                currCmd = "RMV"
+                                rmvRet = RMV(cmdMsgBroken[1], username)
+                                if "File Not Found" in rmvRet:
+                                    serverSocket.sendto("FILE NOT FOUND".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" failed to remove non-existent thread "{cmdMsgBroken[1]}"')
+                                elif "Not Owner" in rmvRet:
+                                    serverSocket.sendto("NOT OWNER".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" not owner of "{cmdMsgBroken[1]}", failed to remove')
+                                else: # "Thread Removed" in rmvRet:
+                                    # Successfully removed file
+                                    serverSocket.sendto("FILE REMOVED SUCCESS".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" deleted thread "{cmdMsgBroken[1]}"!')
                             # MSG
                             elif cmdMsgBroken[0] == "MSG":
                                 print(f'"{username}" issued MSG command')
@@ -142,6 +157,19 @@ if __name__ == "__main__":
                                 else:
                                     serverSocket.sendto("MSG TITLE INVALID".encode("utf-8"), clientAddr)
                                     print(f'Failed to send "{username}"s MESSAGE to thread "{cmdMsgBroken[1]}"')
+                            # RDT
+                            elif cmdMsgBroken[0] == "RDT":
+                                print(f'"{username}" issued RDT command')
+                                currCmd = "RDT"
+                                # pass in threadtitle for reading
+                                rdtRet = RDT(cmdMsgBroken[1])
+                                if "File Not Found" == rdtRet:
+                                    serverSocket.sendto("FILE NOT FOUND".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" failed to read non-existent thread "{cmdMsgBroken[1]}"')
+                                else: # OR "EMPTY" == rdtRet:
+                                    # Send read contents of file
+                                    serverSocket.sendto(rdtRet.encode("utf-8"), clientAddr)
+                                    print(f'"{username}" is reading thread "{cmdMsgBroken[1]}"!')
                             # DLT
                             elif cmdMsgBroken[0] == "DLT":
                                 pass
@@ -151,12 +179,6 @@ if __name__ == "__main__":
                             # LST
                             elif cmdMsgBroken[0] == "LST":
                                 # when sending Thread's contents to Client, have a "\n" for every newline
-                                pass
-                            # RDT
-                            elif cmdMsgBroken[0] == "RDT":
-                                pass
-                            # RMV
-                            elif cmdMsgBroken[0] == "RMV":
                                 pass
                             # UPD
                             elif cmdMsgBroken[0] == "UPD":

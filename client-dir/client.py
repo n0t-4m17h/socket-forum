@@ -59,8 +59,12 @@ def CRT(clientSocket, serverPort, threadtitle, username, currCmd):
         return True
 
 # CMD 2:
-def RMV():
-    pass
+def RMV(clientSocket, serverPort, threadtitle, username, currCmd):
+    if ("RMV RESPONSE" in currCmd) is False: # this allows Client to skip sending and go waiting for Packet, incase of socket.timeout
+        clientSocket.sendto(f"RMV {threadtitle} {username}".encode("utf-8"), ('localhost', int(serverPort)))
+    currCmdEquals("CMD INPUTTED WAITING RMV RESPONSE")
+    resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+    return resp
 
 # CMD 3:
 def MSG(clientSocket, serverPort, threadtitle, msg, currCmd):
@@ -68,12 +72,20 @@ def MSG(clientSocket, serverPort, threadtitle, msg, currCmd):
         # skip the {username} for this one, so we dont need to change breakCmdInput()
         clientSocket.sendto(f"MSG {threadtitle} {msg}".encode("utf-8"), ('localhost', int(serverPort)))
     currCmdEquals("CMD INPUTTED WAITING MSG RESPONSE")
-    # print(f"After: {currCmd}")
     resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
     if "TITLE INVALID" in resp:
         return False
     else:
         return True
+
+# CMD 4:
+def RDT(clientSocket, serverPort, threadtitle, username, currCmd):
+    if ("RDT RESPONSE" in currCmd) is False: # this allows Client to skip sending and go waiting for Packet, incase of socket.timeout
+        # skip the {username} for this one, so we dont need to change breakCmdInput()
+        clientSocket.sendto(f"RDT {threadtitle} {username}".encode("utf-8"), ('localhost', int(serverPort)))
+    currCmdEquals("CMD INPUTTED WAITING RDT RESPONSE")
+    resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+    return resp
 
 # let the OS pick a random Client Port -> "sock.bind(('localhost', 0))", selected port is in "sock.getsockname()"
 ##################
@@ -164,7 +176,7 @@ if __name__ == "__main__":
             try:
                 # This IF is for cases when timeout occurs and CMD input already occurred
                 if ("CMD INPUTTED" in currCmd) is False:
-                    cmdInput = str(input("Enter one of the following commands: CRT, MSG, DLT, EDT, LST, RDT, UPD, DWN, RMV, XIT: "))
+                    cmdInput = str(input("\nEnter one of the following commands: CRT, MSG, DLT, EDT, LST, RDT, UPD, DWN, RMV, XIT: "))
                     currCmdEquals("CMD INPUTTED")
                     # break down cmdInput into a list of args 
                     cmdList = breakCmdInput(cmdInput) # cmdList[0] is the cmd, [1] is 2nd, and [3] is final arg
@@ -189,9 +201,29 @@ if __name__ == "__main__":
                             print(f'Thread "{cmdList[1]}" created!')
                             currCmdEquals("ENTER CMD")
                             continue
+                # RMV
+                elif cmdList[0] == "RMV":
+                    if len(cmdList) != 2:
+                        print("Incorrect syntax for RMV")
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    else:
+                        ret = str(RMV(clientSocket, serverPort, cmdList[1], currUsername, currCmd)).strip()
+                        if "FILE NOT FOUND" in ret:
+                            print(f'Thread "{cmdList[1]}" not found, please try again...')
+                            currCmdEquals("ENTER CMD")
+                            continue
+                        elif "NOT OWNER" in ret:
+                            print(f'You are not the owner of thread "{cmdList[1]}", please try again...')
+                            currCmdEquals("ENTER CMD")
+                            continue
+                        elif "FILE REMOVED" in ret:
+                            print(f'Removed thread "{cmdList[1]}"!')
+                            currCmdEquals("ENTER CMD")
+                            continue
                 # MSG
                 elif cmdList[0] == "MSG":
-                    # Remove any whitespace included, mistakingly leads to extra args (for e.g. "MSG 3331 " instead of "MSG 3331")
+                    # Remove any whitespace included, mistakingly leads to extra args (for e.g. "MSG 3331 " (3args) instead of "MSG 3331" (2args))
                     for i in cmdList:
                         if i == '':
                             cmdList.remove(i)
@@ -209,6 +241,28 @@ if __name__ == "__main__":
                             print(f'Message sent in thread "{cmdList[1]}"')
                             currCmdEquals("ENTER CMD")
                             continue
+                # RDT
+                elif cmdList[0] == "RDT":
+                    if len(cmdList) != 2: # should only be "RDT <title>""
+                        print("Incorrect syntax for RDT")
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    else:
+                        ret = RDT(clientSocket, serverPort, cmdList[1], username, currCmd)
+                        if ret == "FILE NOT FOUND":
+                            print("Invalid threadtitle, please try again...")
+                            currCmdEquals("ENTER CMD")
+                            continue
+                        elif ret == "EMPTY":
+                            print(f'Thread "{cmdList[1]}" is empty')
+                            currCmdEquals("ENTER CMD")
+                            continue
+                        else:
+                            print(f'==== Reading "{cmdList[1]}"')
+                            print(ret)
+                            print(f'==== Done reading')
+                            currCmdEquals("ENTER CMD")
+                            continue
                 # DLT
                 elif cmdList[0] == "DLT":
                     pass
@@ -217,12 +271,6 @@ if __name__ == "__main__":
                     pass
                 # LST
                 elif cmdList[0] == "LST":
-                    pass
-                # RDT
-                elif cmdList[0] == "RDT":
-                    pass
-                # RMV
-                elif cmdList[0] == "RMV":
                     pass
                 # UPD
                 elif cmdList[0] == "UPD":

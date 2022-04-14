@@ -57,14 +57,22 @@ def checkUserPassCombo(username, password):
     f.close()
     return False # combo invalid (password wrong, cause user already checked)
 
-# Creates a new user data-struct (Upon detection of a new login) + adds user deets to data store
+# Creates a new user data-struct (Upon detection of a new login) IFF not already in data store
+# adds user deets to data store
 # AND adds user to credentials.txt IF it's new
 def createNewUser(username, password, isActive, isNewUser):
     store = data_store.get()
-    userStruct = {"username": username, "password": password, "isActive": isActive}
-    store['users'].append(userStruct)
-    data_store.set(store)
-    # server.changeUserActive(username, True)
+    userExistsDataStore = False
+    # check if user is in data store
+    for user in store['users']:
+        if user['username'] == username:
+            userExistsDataStore = True
+    if userExistsDataStore is False:
+        userStruct = {"username": username, "password": password, "isActive": isActive}
+        store['users'].append(userStruct)
+        data_store.set(store)
+    # Overwrite active status incase code above isnt run (case: Old user logging back in)
+    changeUserActive(username, True)
     if isNewUser == True: # user is not in credentials.txt yet
         f = open("credentials.txt", "a") # append new user deets to end of file
         strToAppend = "\n" + f"{username}" + f" {password}" # whitespace included before passW
@@ -106,6 +114,28 @@ def breakCmdMsg(clientMsg):
     # ELSE, its one or two or three inputs (e.g "XIT" or "DLT 3331" or "MSG 3331 hi!")
     return brokenMsg
 
+# Checks whether user owns the given thread, if so, returns True
+def userIsThreadOwner(username, threadtitle):
+    store = data_store.get()
+    for threads in store['threads']:
+        if threads['threadtitle'] == threadtitle:
+            if threads['threadOwner'] == username:
+                return True
+            else:
+                return False
+
+# In cases of RMV(), -1 the threadID of all threads AFTER the removed thread.
+# This is called BEFORE the thread is actually removed 
+def decrementThreadIDs(rmvdThreadTitle):
+    store = data_store.get()
+    threadFound = False
+    for threads in store['threads']:
+        if threads['threadtitle'] == rmvdThreadTitle:
+            threadFound = True # found the thread, now -1 for all successive threads
+        if threadFound is True:
+            threads['threadID'] += -1
+    data_store.set(store)
+
 
 #################
 ### CMDS fncs ###
@@ -130,6 +160,7 @@ def CRT(threadtitle, username):
             "threadOwner": username,
             "threadMembers": [username],
             "threadMsgs": []
+            # "threadFiles": []
         })
         data_store.set(store)
         # Now add file to Server's CWD
@@ -138,9 +169,29 @@ def CRT(threadtitle, username):
         f.close()
         return True
 
-# deez
-def RMV():
-    pass
+# Fnc first checks CWD for thread, then checks the give user is owner of thread, then decrements 1 from 
+# the IDs of all threads created after the given thread (if any), then removes thread from dataStore, then
+# removes file with threadtitle from CWD. 
+def RMV(threadtitle, username):
+    store = data_store.get()
+    # FIRST check CWD for <threadtitle>
+    try:
+        f = open(f"{threadtitle}")
+        f.close()
+        # SECOND, check if username is owner of thread
+        if userIsThreadOwner(username, threadtitle) is False:
+            return "Not Owner"
+        # If so, decrement all threadIDs of threads created after thread-to-be-removed
+        decrementThreadIDs(threadtitle)
+        # FINALLY delete the thread file from CWD and remove from data store
+        for thread in store['threads']:
+            if thread['threadtitle'] == threadtitle:
+                store['threads'].remove(thread)
+                data_store.set(store) # update data store accordingly
+        os.remove(f"{threadtitle}") # rmv thread from server's cwd
+        return "Thread Removed"
+    except FileNotFoundError:
+        return "File Not Found"
 
 # Fnc assumes file already exists (but still checks for file in Server side)
 # Writes user's message to file, and stores it in data store correspondingly.  
@@ -171,6 +222,24 @@ def MSG(threadtitle, msg, username):
     except FileNotFoundError:
         return False
 
-# deez
-def RDT():
-    pass
+# Fnc reads contents of file and sends it to Client.
+# Still checks if File exists or is Empty (only username in first line n thats it, if so, send "EMPTY")
+def RDT(threadtitle):
+    try:
+        # First used readlines()
+        f = open(f"{threadtitle}", "r")
+        allLinesF = f.readlines()
+        numLinesF = len(allLinesF)
+        # then join the list via:
+        fileLines = ""
+        if numLinesF > 1: # if file has no messages/file uploads, return EMPTY
+            for i in range(1, numLinesF): # do not include first line ("ownerUsername")
+                fileLines = fileLines + allLinesF[i] # "\n" NOT needed IFF allLinesf[i] includes "\n" at the end
+                # keep in mind client does "strip()" when it recieves this from Server !!!
+        # returns a string of all the contents, EACH line in file is seperated via "\n" (print out to terminal to check this)
+        # when client recieves this, client does .split("\n")
+        else:
+            fileLines = "EMPTY"
+        return fileLines
+    except FileNotFoundError:
+        return "File Not Found"

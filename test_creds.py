@@ -77,14 +77,32 @@ def MSG(title, msg, username):
     except FileNotFoundError:
         print("MSG cmd's file not found")
         # snedto("MSG FAILURE")
-        
+
+def RDT(threadtitle):
+    # First used readlines()
+    f = open(f"{threadtitle}", "r")
+    allLinesF = f.readlines()
+    numLinesF = len(allLinesF)
+    # then join the list via:
+    fileLines = ""
+    if numLinesF > 1: # if file has no messages/file uploads, return EMPTY
+        for i in range(1, numLinesF):
+            fileLines = fileLines + allLinesF[i] # "\n" NOT needed IFF allLinesf[i] includes "\n" at the end
+            # keep in mind client does "strip()" when it recieves this from Server !!!
+    else:
+        fileLines = "EMPTY"
+    # returns a string of all the contents, EACH line in file is seperated via "\n" (print out to terminal to check this)
+    # when client recieves this, client does .split("\n")
+    return fileLines
 
 if __name__ == "__main__":
     # scan CWD for file of same name
     # if not
-    CRT("hans", "3331")
-    MSG("3331", "ogres are like onions", "shrek")
-
+    CRT("shrek", "shrek1")
+    MSG("shrek1", "ogres are like onions", "shrek")
+    MSG("shrek1", "they smell?", "donkeh")
+    lines = str(RDT("shrek1")).strip()
+    print(lines)
     # print("Going to open cred.txt file: ")
     # truth = usernameExists("hans")
     # if truth is True:
