@@ -23,6 +23,7 @@ if __name__ == "__main__":
     if (len(sys.argv) != 2):
         sys.exit("Execute program as such: $python3 server.py <server_port>")
     serverPort = int(sys.argv[1])
+    WAIT_TIME_INF = 86400 # 24hrs
     WAIT_TIME_AUTH = 20 # wait time for authentication stage 
     WAIT_TIME_CMDS = 30 # for CMDs-input stage (NOTE: not good, cause User needs more time to read a thread for e.g)
     WAIT_TIME_IMG = 30 # wait time for image transfers
@@ -34,6 +35,7 @@ if __name__ == "__main__":
     while 1: # while loop 1 for Server's infinite loop
         try:
             print("Server waiting for clients...")
+            serverSocket.settimeout(WAIT_TIME_INF)
             usernameMsg, clientAddr = serverSocket.recvfrom(2048)
             print("Client authenticating")
             prevUsernameInput = ""
@@ -146,6 +148,15 @@ if __name__ == "__main__":
                                     # Successfully removed file
                                     serverSocket.sendto("FILE REMOVED SUCCESS".encode("utf-8"), clientAddr)
                                     print(f'"{username}" deleted thread "{cmdMsgBroken[1]}"!')
+                            # LST
+                            elif cmdMsgBroken[0] == "LST":
+                                # when sending Thread's contents to Client, have a "\n" for every newline
+                                print(f'"{username}" issued LST command')
+                                currCmd = "LST"
+                                # pass in threadtitle for reading
+                                lstRet = LST()
+                                serverSocket.sendto(lstRet.encode("utf-8"), clientAddr)
+                                print(f'"{username}" is viewing all listed threadtitles!')
                             # MSG
                             elif cmdMsgBroken[0] == "MSG":
                                 print(f'"{username}" issued MSG command')
@@ -153,10 +164,10 @@ if __name__ == "__main__":
                                 # Pass in threadtitle then 'msg'
                                 if MSG(cmdMsgBroken[1], cmdMsgBroken[2], username) is True:
                                     serverSocket.sendto("MSG SUCCESS".encode("utf-8"), clientAddr)
-                                    print(f'"{username}" sent a MESSAGE in thread "{cmdMsgBroken[1]}"!')
+                                    print(f'"{username}" sent a message in thread "{cmdMsgBroken[1]}"!')
                                 else:
                                     serverSocket.sendto("MSG TITLE INVALID".encode("utf-8"), clientAddr)
-                                    print(f'Failed to send "{username}"s MESSAGE to thread "{cmdMsgBroken[1]}"')
+                                    print(f'Failed to send "{username}"s message to thread "{cmdMsgBroken[1]}"')
                             # RDT
                             elif cmdMsgBroken[0] == "RDT":
                                 print(f'"{username}" issued RDT command')
@@ -170,21 +181,30 @@ if __name__ == "__main__":
                                     # Send read contents of file
                                     serverSocket.sendto(rdtRet.encode("utf-8"), clientAddr)
                                     print(f'"{username}" is reading thread "{cmdMsgBroken[1]}"!')
+                            # EDT
+                            elif cmdMsgBroken[0] == "EDT":
+                                print(f'"{username}" issued EDT command')
+                                currCmd = "EDT"
+                                # BREAK DOWN CMD AS PER CLIENT.PY'S HELPER, SPECIAL CASE OF EDT
+                                EDTrespBroken = EDTbreakResp(cmdMsg)
+                                # pass in threadtitle, username, msgID & newMsg, for processing
+                                #               <thread>                     <msgID>         <newMsg>
+                                edtRet = EDT(EDTrespBroken[1], username, int(EDTrespBroken[3]), EDTrespBroken[4])
+                                if "File Not Found" == edtRet:
+                                    serverSocket.sendto("FILE NOT FOUND".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" failed to edit msg in non-existent thread "{EDTrespBroken[1]}"')
+                                elif "MsgID Is Out Of Range" == edtRet:
+                                    serverSocket.sendto("MSGID IS OUT OF RANGE".encode("utf-8"), clientAddr)
+                                    print(f'"{username}"s msgID "{EDTrespBroken[3]}" is out of range in thread "{EDTrespBroken[1]}"')
+                                elif "User Is Not Owner Of Msg" == edtRet:
+                                    serverSocket.sendto("USER IS NOT OWNER".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" is not owner of msgID "{EDTrespBroken[3]}" in thread "{EDTrespBroken[1]}"')
+                                else: # "Success" == edtRet
+                                    serverSocket.sendto("SUCCESS".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" edited msgID "{EDTrespBroken[3]}" in thread "{EDTrespBroken[1]}"!')
                             # DLT
                             elif cmdMsgBroken[0] == "DLT":
                                 pass
-                            # EDT
-                            elif cmdMsgBroken[0] == "EDT":
-                                pass
-                            # LST
-                            elif cmdMsgBroken[0] == "LST":
-                                # when sending Thread's contents to Client, have a "\n" for every newline
-                                print(f'"{username}" issued LST command')
-                                currCmd = "LST"
-                                # pass in threadtitle for reading
-                                lstRet = LST()
-                                serverSocket.sendto(lstRet.encode("utf-8"), clientAddr)
-                                print(f'Listing all threadtitles to "{username}"!')
                             # UPD
                             elif cmdMsgBroken[0] == "UPD":
                                 pass

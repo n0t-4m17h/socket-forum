@@ -114,6 +114,23 @@ def breakCmdMsg(clientMsg):
     # ELSE, its one or two or three inputs (e.g "XIT" or "DLT 3331" or "MSG 3331 hi!")
     return brokenMsg
 
+# Same fnc as above, except catered for "EDT" client responses
+# ["EDT", <title>, <username>, <msgID>, <newMsg>]
+def EDTbreakResp(clientResp):
+    brokenResp = clientResp.split(" ")
+    lenBrokenResp = len(brokenResp)
+    # join the 4th+ indexes
+    newResp = ''
+    for i in range(4, lenBrokenResp):
+        newResp = newResp + brokenResp[i] + ' '
+    # combine all needed
+    retResp = [str(brokenResp[0]), str(brokenResp[1]), str(brokenResp[2]), str(brokenResp[3]), str(newResp.rstrip())]
+    # remove whitespaces from retInput
+    for i in retResp:
+        if i == '':
+            retResp.remove(i)
+    return retResp
+
 # Checks whether user owns the given thread, if so, returns True
 def userIsThreadOwner(username, threadtitle):
     store = data_store.get()
@@ -137,9 +154,11 @@ def decrementThreadIDs(rmvdThreadTitle):
     data_store.set(store)
 
 
+
 #################
 ### CMDS fncs ###
 #################
+
 
 # Fnc first checks if CRT threadtitle already exists, If so, returns False
 # IF not, file is created, returns True
@@ -169,6 +188,7 @@ def CRT(threadtitle, username):
         f.close()
         return True
 
+
 # Fnc first checks CWD for thread, then checks the give user is owner of thread, then decrements 1 from 
 # the IDs of all threads created after the given thread (if any), then removes thread from dataStore, then
 # removes file with threadtitle from CWD. 
@@ -192,6 +212,43 @@ def RMV(threadtitle, username):
         return "Thread Removed"
     except FileNotFoundError:
         return "File Not Found"
+
+
+# Fnc reads contents of file and sends it to Client.
+# Still checks if File exists or is Empty (only username in first line n thats it, if so, send "EMPTY")
+def RDT(threadtitle):
+    try:
+        # First used readlines()
+        f = open(f"{threadtitle}", "r")
+        allLinesF = f.readlines()
+        numLinesF = len(allLinesF)
+        # then join the list via:
+        fileLines = ""
+        if numLinesF > 1: # if file has no messages/file uploads, return EMPTY
+            for i in range(1, numLinesF): # do not include first line ("ownerUsername")
+                fileLines = fileLines + allLinesF[i] # "\n" NOT needed IFF allLinesf[i] includes "\n" at the end
+                # keep in mind client does "strip()" when it recieves this from Server !!!
+        # returns a string of all the contents, EACH line in file is seperated via "\n" (print out to terminal to check this)
+        # when client recieves this, client does .split("\n")
+        else:
+            fileLines = "EMPTY"
+        return fileLines
+    except FileNotFoundError:
+        return "File Not Found"
+
+
+# Simply returns all the Active threads. If none, returns "None"
+def LST():
+    store = data_store.get()
+    threadNames = "Niche"
+    # First check threads aren't empty
+    numOfThreads = len(store['threads'])
+    if numOfThreads > 0:
+        threadNames = ""
+        for thread in store['threads']:
+            threadNames = threadNames + thread['threadtitle'] + "\n"
+    return threadNames
+
 
 # Fnc assumes file already exists (but still checks for file in Server side)
 # Writes user's message to file, and stores it in data store correspondingly.  
@@ -222,36 +279,54 @@ def MSG(threadtitle, msg, username):
     except FileNotFoundError:
         return False
 
-# Fnc reads contents of file and sends it to Client.
-# Still checks if File exists or is Empty (only username in first line n thats it, if so, send "EMPTY")
-def RDT(threadtitle):
-    try:
-        # First used readlines()
+
+# Edits the msg given via msgID, if its the user and if it exists in the Thread
+# First checks if File exists
+def EDT(threadtitle, username, msgID, newMsg):
+    store = data_store.get()
+    retMsg = "File Not Found"
+    # First check if File exists
+    for thread in store['threads']:
+        if thread['threadtitle'] == threadtitle:
+            numOfMsgs = len(thread['threadMsgs'])
+            retMsg = 'MsgID Is Out Of Range'
+            # Then check if the msgID isn't out of range (if this IF is wrong, retMsg will stay as is)
+            if msgID <= numOfMsgs and msgID > 0:
+                retMsg = 'User Is Not Owner Of Msg'
+                # Then check if username is owner of message
+                for msgs in thread['threadMsgs']:
+                    if msgs['msgID'] == msgID:
+                        if msgs['msgUser'] == username:
+                            # Replace old msg w/ new msg
+                            msgs['msg'] = newMsg
+                            retMsg = "Success"
+                            break
+    data_store.set(store)
+    if retMsg == "Success":
+        # Now go edit the message in file (assuming username is owner of msg as per above)
         f = open(f"{threadtitle}", "r")
         allLinesF = f.readlines()
-        numLinesF = len(allLinesF)
-        # then join the list via:
-        fileLines = ""
-        if numLinesF > 1: # if file has no messages/file uploads, return EMPTY
-            for i in range(1, numLinesF): # do not include first line ("ownerUsername")
-                fileLines = fileLines + allLinesF[i] # "\n" NOT needed IFF allLinesf[i] includes "\n" at the end
-                # keep in mind client does "strip()" when it recieves this from Server !!!
-        # returns a string of all the contents, EACH line in file is seperated via "\n" (print out to terminal to check this)
-        # when client recieves this, client does .split("\n")
-        else:
-            fileLines = "EMPTY"
-        return fileLines
-    except FileNotFoundError:
-        return "File Not Found"
+        f.close()
+        ctr = 0
+        for i in allLinesF:
+            if i[0] == str(msgID):
+                # partition the file line into 3 bits (2nd bit being ":")
+                parted = i.partition(":")
+                if ctr == len(allLinesF) - 1: # Dont add NEWLINE if its the very last line
+                    msgToAdd = parted[0] + parted[1] + " " + newMsg# + "\n"
+                else: # Otherwise, add newline
+                    msgToAdd = parted[0] + parted[1] + " " + newMsg + "\n"
+                allLinesF[ctr] = str(msgToAdd)
+                break
+            ctr += 1
+        # Empty out file and rewrite the whole file in, except specific line will now be edited.
+        f = open(f"{threadtitle}", "w")
+        for line in allLinesF:
+            f.write(line)
+        f.close()
+    return retMsg        
 
-# Simply returns all the Active threads. If none, returns "None"
-def LST():
-    store = data_store.get()
-    threadNames = "Niche"
-    # First check threads aren't empty
-    numOfThreads = len(store['threads'])
-    if numOfThreads > 0:
-        threadNames = ""
-        for thread in store['threads']:
-            threadNames = threadNames + thread['threadtitle'] + "\n"
-    return threadNames
+
+# deez
+def DLT():
+    pass

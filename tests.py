@@ -43,6 +43,22 @@ def breakCmdInput(userInput):
     # ELSE, its a single command args
     return brokenInput
 
+def EDTbreakCmdInput(userInput):
+    brokenInput = userInput.split(" ")
+    lenBrokenInput = len(brokenInput)
+    # join the 4th+ indexes
+    newIn = ''
+    for i in range(4, lenBrokenInput):
+        newIn = newIn + brokenInput[i] + ' '
+    # combine all needed
+    retInput = [str(brokenInput[0]), str(brokenInput[1]), str(brokenInput[2]), str(brokenInput[3]), str(newIn.rstrip())]
+    # remove whitespaces from retInput
+    for i in retInput:
+        if i == '':
+            retInput.remove(i)
+    return retInput
+
+
 def appendToEOF(stringToAppend):
     f = open("credentials.txt", "a") # open in "access" mode
     f.write(stringToAppend)
@@ -95,12 +111,48 @@ def RDT(threadtitle):
     # when client recieves this, client does .split("\n")
     return fileLines
 
+def EDT(threadtitle, username, msgID, newMsg):
+    # Now go edit the message in file
+    f = open(f"{threadtitle}", "r")
+    allLinesF = f.readlines()
+    # print(allLinesF)
+    # print(allLinesF[3][0])
+    # print()
+    ctr = 0
+    print(f"LEN: {len(allLinesF)}")
+    for i in allLinesF:
+        # print(f"Line: {i}")
+        if i[0] == str(msgID):
+            # break down the string into 2 bits (upto ":" and beyond)
+            parted = i.partition(":")
+            # print(f"parted msg -> {parted}")
+            if ctr == len(allLinesF) - 1: # Dont add NEWLINE if its the very last line
+                msgToAdd = parted[0] + parted[1] + " " + newMsg# + "\n"
+            else: # If not last line, then add newline
+                msgToAdd = parted[0] + parted[1] + " " + newMsg + "\n"
+            # print(f"msg to add -> {str(msgToAdd)}")
+            allLinesF[ctr] = str(msgToAdd)
+            break
+        ctr += 1
+    # print(allLinesF)
+    f = open(f"{threadtitle}", "w")
+    for line in allLinesF:
+        f.write(line)
+    f.close()
+    print(f"EDT: Msg id '{msgID}' has been edited!")
+    # return retMsg       
+
 if __name__ == "__main__":
+    # pass
+    # print(EDTbreakCmdInput("EDT shrek1 hans 2 hello darkness my old friend"))
 
     CRT("shrek", "shrek1")
     MSG("shrek1", "ogres are like onions", "shrek")
     MSG("shrek1", "they smell?", "donkeh")
-    
+    MSG("shrek1", "NO! Well, yes", "shrek")
+    EDT("shrek1", "donkeh", "3", "im shrek")
+    MSG("shrek1", "howd u edit ur msg like that?!", "donkeh")
+
     # lines = str(RDT("shrek1")).strip()
     # print(lines)
 
@@ -117,6 +169,8 @@ if __name__ == "__main__":
     # password = "aLegend69"
     # strToAppend = "\n" + f"{user}" + f" {password}"
     # appendToEOF(strToAppend)
+
+    # print(EDTbreakCmdInput("EDT 3331 3 hello thendi pattis"))
     
     # userIn = str(input("Enter cmd: "))
     # cmdList = breakCmdInput(userIn)
@@ -125,4 +179,3 @@ if __name__ == "__main__":
     # print(cmdList[0])
     # print(type(cmdList[0]))
 
-        

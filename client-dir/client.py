@@ -35,6 +35,20 @@ def breakCmdInput(userInput):
     # ELSE, its just 1 or 2 or 3 inputs (e.g "XIT" or "DLT 3331" or "MSG 3331 hi!")
     return brokenInput
 
+# Same fnc as above, except catered for "EDT" cmd
+# ["EDT", <title>, <msgID>, <newMsg>]
+def EDTbreakCmdInput(userInput):
+    brokenInput = userInput.split(" ")
+    lenBrokenInput = len(brokenInput)
+    # join the 3rd+ indexes
+    newIn = ''
+    for i in range(3, lenBrokenInput):
+        newIn = newIn + brokenInput[i] + ' '
+    # combine all needed
+    retInput = [str(brokenInput[0]), str(brokenInput[1]), str(brokenInput[2]), str(newIn.rstrip())]
+    return retInput
+
+
 ###################
 #### CMDs Fncs ####
 ###################
@@ -94,6 +108,15 @@ def LST(clientSocket, serverPort, username, currCmd):
     currCmdEquals("CMD INPUTTED WAITING LST RESPONSE")
     resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
     return resp
+
+# CMD 7:
+def EDT(clientSocket, serverPort, threadtitle, username, msgID, newMsg, currCmd):
+    if ("EDT RESPONSE" in currCmd) is False: # this allows Client to skip sending and go waiting for Packet, incase of socket.timeout
+        clientSocket.sendto(f"EDT {threadtitle} {username} {msgID} {newMsg}".encode("utf-8"), ('localhost', int(serverPort)))
+    currCmdEquals("CMD INPUTTED WAITING EDT RESPONSE")
+    resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+    return resp
+    
 
 # let the OS pick a random Client Port -> "sock.bind(('localhost', 0))", selected port is in "sock.getsockname()"
 ##################
@@ -289,11 +312,50 @@ if __name__ == "__main__":
                             print(f'==== Done reading')
                             currCmdEquals("ENTER CMD")
                             continue
-                # DLT
-                elif cmdList[0] == "DLT":
-                    pass
                 # EDT
                 elif cmdList[0] == "EDT":
+                    if len(cmdList) < 3: # should only be "EDT <title> <msgID> <msg...>" atleast
+                        print("Incorrect syntax for EDT")
+                        print("here")
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    # Since EDT has 3 extra args, its a special case (breakCmdInput() will is not wired for EDT cmds)
+                    listToSend = EDTbreakCmdInput(cmdInput)
+                    if len(listToSend) != 4:
+                        print("Incorrect syntax for EDT")
+                        print("there")
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    # Check if msgID is a number (isinstance() may raise error if msgID == "hello" for e.g.)
+                    try:
+                        if isinstance(int(listToSend[2]), int) is False:
+                            print("Please enter an integer for message ID...")
+                            currCmdEquals("ENTER CMD")
+                            continue
+                    except: # ValueError 
+                        print("Please enter an integer for message ID...")
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    #                                    <thread>     <username>   <msgID>        <newMsg>
+                    ret = EDT(clientSocket, serverPort, listToSend[1], username, listToSend[2], listToSend[3], currCmd)
+                    if ret == "FILE NOT FOUND":
+                            print("Invalid threadtitle, please try again...")
+                            currCmdEquals("ENTER CMD")
+                            continue
+                    elif ret == "MSGID IS OUT OF RANGE":
+                        print(f'Invalid message ID "{listToSend[2]}"')
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    elif ret == "USER IS NOT OWNER":
+                        print(f'Incorrect owner of the message with ID "{listToSend[2]}"')
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    else: # ret == "SUCCESS" 
+                        print(f'Message ID "{listToSend[2]}" in "{listToSend[1]}" has been edited!')
+                        currCmdEquals("ENTER CMD")
+                        continue
+                # DLT
+                elif cmdList[0] == "DLT":
                     pass
                 # UPD
                 elif cmdList[0] == "UPD":
