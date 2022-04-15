@@ -243,3 +243,15 @@ def RDT(threadtitle):
         return fileLines
     except FileNotFoundError:
         return "File Not Found"
+
+# Simply returns all the Active threads. If none, returns "None"
+def LST():
+    store = data_store.get()
+    threadNames = "Niche"
+    # First check threads aren't empty
+    numOfThreads = len(store['threads'])
+    if numOfThreads > 0:
+        threadNames = ""
+        for thread in store['threads']:
+            threadNames = threadNames + thread['threadtitle'] + "\n"
+    return threadNames

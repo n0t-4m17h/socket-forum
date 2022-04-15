@@ -58,7 +58,7 @@ def CRT(clientSocket, serverPort, threadtitle, username, currCmd):
     else:
         return True
 
-# CMD 2:
+# CMD 3:
 def RMV(clientSocket, serverPort, threadtitle, username, currCmd):
     if ("RMV RESPONSE" in currCmd) is False: # this allows Client to skip sending and go waiting for Packet, incase of socket.timeout
         clientSocket.sendto(f"RMV {threadtitle} {username}".encode("utf-8"), ('localhost', int(serverPort)))
@@ -66,7 +66,7 @@ def RMV(clientSocket, serverPort, threadtitle, username, currCmd):
     resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
     return resp
 
-# CMD 3:
+# CMD 4:
 def MSG(clientSocket, serverPort, threadtitle, msg, currCmd):
     if ("MSG RESPONSE" in currCmd) is False: # this allows Client to skip sending and go waiting for Packet, incase of socket.timeout
         # skip the {username} for this one, so we dont need to change breakCmdInput()
@@ -78,12 +78,20 @@ def MSG(clientSocket, serverPort, threadtitle, msg, currCmd):
     else:
         return True
 
-# CMD 4:
+# CMD 5:
 def RDT(clientSocket, serverPort, threadtitle, username, currCmd):
     if ("RDT RESPONSE" in currCmd) is False: # this allows Client to skip sending and go waiting for Packet, incase of socket.timeout
         # skip the {username} for this one, so we dont need to change breakCmdInput()
         clientSocket.sendto(f"RDT {threadtitle} {username}".encode("utf-8"), ('localhost', int(serverPort)))
     currCmdEquals("CMD INPUTTED WAITING RDT RESPONSE")
+    resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+    return resp
+
+# CMD 6:
+def LST(clientSocket, serverPort, username, currCmd):
+    if ("LST RESPONSE" in currCmd) is False: # this allows Client to skip sending and go waiting for Packet, incase of socket.timeout
+        clientSocket.sendto(f"LST {username}".encode("utf-8"), ('localhost', int(serverPort)))
+    currCmdEquals("CMD INPUTTED WAITING LST RESPONSE")
     resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
     return resp
 
@@ -221,6 +229,24 @@ if __name__ == "__main__":
                             print(f'Removed thread "{cmdList[1]}"!')
                             currCmdEquals("ENTER CMD")
                             continue
+                # LST
+                elif cmdList[0] == "LST":
+                    if len(cmdList) != 1:
+                        print("Incorrect syntax for LST")
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    else:
+                        ret = LST(clientSocket, serverPort, username, currCmd)
+                        if ret == "Niche":
+                            print("There are no active threads right now")
+                            currCmdEquals("ENTER CMD")
+                            continue
+                        else:
+                            print(f'==== Listing all threads')
+                            print(ret)
+                            print(f'==== Done listing')
+                            currCmdEquals("ENTER CMD")
+                            continue
                 # MSG
                 elif cmdList[0] == "MSG":
                     # Remove any whitespace included, mistakingly leads to extra args (for e.g. "MSG 3331 " (3args) instead of "MSG 3331" (2args))
@@ -268,9 +294,6 @@ if __name__ == "__main__":
                     pass
                 # EDT
                 elif cmdList[0] == "EDT":
-                    pass
-                # LST
-                elif cmdList[0] == "LST":
                     pass
                 # UPD
                 elif cmdList[0] == "UPD":

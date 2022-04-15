@@ -179,7 +179,12 @@ if __name__ == "__main__":
                             # LST
                             elif cmdMsgBroken[0] == "LST":
                                 # when sending Thread's contents to Client, have a "\n" for every newline
-                                pass
+                                print(f'"{username}" issued LST command')
+                                currCmd = "LST"
+                                # pass in threadtitle for reading
+                                lstRet = LST()
+                                serverSocket.sendto(lstRet.encode("utf-8"), clientAddr)
+                                print(f'Listing all threadtitles to "{username}"!')
                             # UPD
                             elif cmdMsgBroken[0] == "UPD":
                                 pass

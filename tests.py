@@ -1,4 +1,4 @@
-# For testing certain file-stuff (and more) in a smaller environment
+# For testing certain file-stuff (and more) cmds in a smaller environment
 
 from socket import *
 import os
@@ -96,13 +96,14 @@ def RDT(threadtitle):
     return fileLines
 
 if __name__ == "__main__":
-    # scan CWD for file of same name
-    # if not
+
     CRT("shrek", "shrek1")
     MSG("shrek1", "ogres are like onions", "shrek")
     MSG("shrek1", "they smell?", "donkeh")
-    lines = str(RDT("shrek1")).strip()
-    print(lines)
+    
+    # lines = str(RDT("shrek1")).strip()
+    # print(lines)
+
     # print("Going to open cred.txt file: ")
     # truth = usernameExists("hans")
     # if truth is True:
