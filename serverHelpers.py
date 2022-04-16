@@ -153,6 +153,20 @@ def decrementThreadIDs(rmvdThreadTitle):
             threads['threadID'] += -1
     data_store.set(store)
 
+# In cases of DLT(). -1 the msgID of all msgs in the given thread AFTER the to-be-removed msgID
+# This is called BEFORE msg is actually deleted
+# When called, its assumed hat all checks for DLT() have been passed (file found, msgID in range, user is owner)
+def decrementMsgIDs(threadtitle, dltMsgID):
+    store = data_store.get()
+    msgFound = False
+    for threads in store['threads']:
+        if threads['threadtitle'] == threadtitle:
+            for msgs in threads['threadMsgs']:
+                if msgs['msgID'] == dltMsgID:
+                    msgFound = True # found the msgID, now -1 for all successive msgIDs
+                if msgFound is True:
+                    msgs['msgID'] += -1
+    data_store.set(store)
 
 
 #################
@@ -258,11 +272,29 @@ def MSG(threadtitle, msg, username):
         f = open(f"{threadtitle}", "r") # First grab the no. of lines via readlines() by "r" mode
         allLinesF = f.readlines()
         f.close()
-        msgID = len(allLinesF)
+        msgID = len(allLinesF) # This ignores the standalone "\n" issue that arises from DLT() last msgs
         msgToAppend = f"\n{msgID} {username}: {msg}"
         f = open(f"{threadtitle}", "a") # open for appending
         f.write(msgToAppend)
         f.close()
+        # ~~~~~~~~ DLT() leaves newline as a whole line IFF a last line is deleted, workaround is here:
+        foundaNewLine = False
+        fNew = open(f"{threadtitle}", "r")
+        newLinesF = fNew.readlines()
+        # Check for standalone new lines for e.g. newLinesF = ["hello\n", "\n", "<newMsg>"]
+        for line in newLinesF:
+            if line == '\n':
+                foundaNewLine = True
+                newLinesF.remove(line)
+        fNew.close()
+        # Now write newLinesF into file IFF a newline was detected, otherwise dont bother
+        if foundaNewLine is True:
+            fFinal = open(f"{threadtitle}", "w") # open for writing
+            for lines in newLinesF:
+                fFinal.write(lines)
+            fFinal.close()
+        # ~~~~~~~~
+        # FINALLY, add to DATA STORE
         msgMeta = {
             'msgID': msgID,
             'msgUser': username,
@@ -327,6 +359,48 @@ def EDT(threadtitle, username, msgID, newMsg):
     return retMsg        
 
 
-# deez
-def DLT():
-    pass
+# Deletes the msg given via msgID, if its the user and if it exists in the Thread
+# MSG() cmd was also edited due to this fnc leaving behind an empty line when deleting a line, so MSG() features
+# an IF for removing single "\n" lines from readlines() fnc
+def DLT(threadtitle, msgID, username):
+    # Remove msgID from data store
+    store = data_store.get()
+    retMsg = "File Not Found"
+    # First check if File exists
+    for thread in store['threads']:
+        if thread['threadtitle'] == threadtitle:
+            numOfMsgs = len(thread['threadMsgs'])
+            retMsg = 'MsgID Is Out Of Range'
+            # Then check if the msgID isn't out of range (if this IF is wrong, retMsg will stay as is)
+            if msgID <= numOfMsgs and msgID > 0:
+                retMsg = 'User Is Not Owner Of Msg'
+                # Then check if username is owner of message
+                for msgs in thread['threadMsgs']:
+                    if msgs['msgID'] == msgID:
+                        if msgs['msgUser'] == username:
+                            # FIRST decrement all the IDs of messages after this curr message
+                            decrementMsgIDs(threadtitle, msgID)
+                            # Message found and confirmed, now delete it
+                            thread['threadMsgs'].remove(msgs)
+                            retMsg = "Success"
+                            break
+    data_store.set(store)
+    if retMsg == "Success":
+        # Now go delete the message in file (assuming username is owner of msg as per above)
+        f = open(f"{threadtitle}", "r")
+        allLinesF = f.readlines()
+        f.close()
+        ctr = 0
+        for i in allLinesF:
+            if i[0] == str(msgID):
+                # remove the line from allLinesF
+                allLinesF.remove(i)
+                break
+            ctr += 1
+        # Empty out file and rewrite the whole file in, except specific line will now be deleted.
+        f = open(f"{threadtitle}", "w")
+        for line in allLinesF:
+            f.write(line)
+        f.close()
+    return retMsg
+

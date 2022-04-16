@@ -204,7 +204,23 @@ if __name__ == "__main__":
                                     print(f'"{username}" edited msgID "{EDTrespBroken[3]}" in thread "{EDTrespBroken[1]}"!')
                             # DLT
                             elif cmdMsgBroken[0] == "DLT":
-                                pass
+                                print(f'"{username}" issued DLT command')
+                                currCmd = "DLT"
+                                #               <thread>             <msgID>
+                                dltRet = DLT(cmdMsgBroken[1], int(cmdMsgBroken[2]), username)
+                                if "File Not Found" == dltRet:
+                                    serverSocket.sendto("FILE NOT FOUND".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" failed to delete msg in non-existent thread "{EDTrespBroken[1]}"')
+                                elif "MsgID Is Out Of Range" == dltRet:
+                                    serverSocket.sendto("MSGID IS OUT OF RANGE".encode("utf-8"), clientAddr)
+                                    print(f'"{username}"s msgID "{EDTrespBroken[3]}" is out of range in thread "{EDTrespBroken[1]}"')
+                                elif "User Is Not Owner Of Msg" == dltRet:
+                                    serverSocket.sendto("USER IS NOT OWNER".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" is not owner of msgID "{EDTrespBroken[3]}" in thread "{EDTrespBroken[1]}"')
+                                else: # "Success" == edtRet
+                                    serverSocket.sendto("SUCCESS".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" delted msgID "{EDTrespBroken[3]}" in thread "{EDTrespBroken[1]}"!')
+
                             # UPD
                             elif cmdMsgBroken[0] == "UPD":
                                 pass

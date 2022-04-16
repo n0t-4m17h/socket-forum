@@ -117,6 +117,13 @@ def EDT(clientSocket, serverPort, threadtitle, username, msgID, newMsg, currCmd)
     resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
     return resp
     
+# CMD 8:
+def DLT(clientSocket, serverPort, threadtitle, msgID, currCmd):
+    if ("DLT RESPONSE" in currCmd) is False: # this allows Client to skip sending and go waiting for Packet, incase of socket.timeout
+        clientSocket.sendto(f"DLT {threadtitle} {msgID}".encode("utf-8"), ('localhost', int(serverPort)))
+    currCmdEquals("CMD INPUTTED WAITING DLT RESPONSE")
+    resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+    return resp
 
 # let the OS pick a random Client Port -> "sock.bind(('localhost', 0))", selected port is in "sock.getsockname()"
 ##################
@@ -190,7 +197,7 @@ if __name__ == "__main__":
             # Upon socket.timeout()
             if (str(e).rstrip()) == "timed out":
                 print("Server's packet timedout, retrying...")
-                print(f"Last currCmd value: {currCmd}")
+                # print(f"Last currCmd value: {currCmd}")
                 continue
             else:
                 print(f"e: {e}")
@@ -356,7 +363,36 @@ if __name__ == "__main__":
                         continue
                 # DLT
                 elif cmdList[0] == "DLT":
-                    pass
+                    if len(cmdList) != 3: # should only be "DLT <title> <msgID>", everything after <title> is grouped as one string
+                        print("Incorrect syntax for DLT")
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    try:
+                        if isinstance(int(cmdList[2]), int) is False:
+                            print("Please enter an integer for message ID...")
+                            currCmdEquals("ENTER CMD")
+                            continue
+                    except: # ValueError 
+                        print("Please enter an integer for message ID...")
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    ret = DLT(clientSocket, serverPort, cmdList[1], cmdList[2], currCmd)
+                    if ret == "FILE NOT FOUND":
+                            print("Invalid threadtitle, please try again...")
+                            currCmdEquals("ENTER CMD")
+                            continue
+                    elif ret == "MSGID IS OUT OF RANGE":
+                        print(f'Invalid message ID "{cmdList[2]}"')
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    elif ret == "USER IS NOT OWNER":
+                        print(f'Incorrect owner of the message with ID "{cmdList[2]}"')
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    else: # ret == "SUCCESS" 
+                        print(f'Message ID "{cmdList[2]}" in "{cmdList[1]}" has been deleted!')
+                        currCmdEquals("ENTER CMD")
+                        continue
                 # UPD
                 elif cmdList[0] == "UPD":
                     # Tell Server to open TCP connection, then do file transfer

@@ -89,7 +89,28 @@ def MSG(title, msg, username):
         f.write(msgToAppend)
         f.close()
         print("MSG added to file")
-        # snedto("MSG SUCCESS")
+        # print()
+
+        ### DLT() leaves newline as a whole line IFF a last line is deleted, workaround is here:
+        foundaNewLine = False
+        fNew = open(f"{title}", "r")
+        newLinesF = fNew.readlines()
+        print(f"in MSG newlinesF len({len(newLinesF)}) before: {newLinesF}")
+        for line in newLinesF:
+            if line == '\n':
+                foundaNewLine = True
+                newLinesF.remove(line)
+        fNew.close()
+        # Now write newLinesF into file
+        if foundaNewLine is True:
+            print("MSG added AND removed newlines (in new file)")
+            fFinal = open(f"{title}", "w") # open for writing
+            for lines in newLinesF:
+                fFinal.write(lines)
+            fFinal.close()
+        else:
+            print("MSG: No newlines found")
+        # print(f"in MSG newlinesF after: {newLinesF}")
     except FileNotFoundError:
         print("MSG cmd's file not found")
         # snedto("MSG FAILURE")
@@ -119,7 +140,7 @@ def EDT(threadtitle, username, msgID, newMsg):
     # print(allLinesF[3][0])
     # print()
     ctr = 0
-    print(f"LEN: {len(allLinesF)}")
+    # print(f"LEN: {len(allLinesF)}")
     for i in allLinesF:
         # print(f"Line: {i}")
         if i[0] == str(msgID):
@@ -142,16 +163,53 @@ def EDT(threadtitle, username, msgID, newMsg):
     print(f"EDT: Msg id '{msgID}' has been edited!")
     # return retMsg       
 
+# DOESNT decrement msgIDs (implem. seperately in serverHelpers.py)
+def DLT(threadtitle, msgID, username):
+    # Now go edit the message in file
+    f = open(f"{threadtitle}", "r")
+    allLinesF = f.readlines()
+    # oldLenAllLinesF = len(allLinesF)
+    # print(f"in DLT: {allLinesF}")
+    # print(allLinesF[3][0])
+    # print()
+    ctr = 0
+    # print(f"LEN: {len(allLinesF)}")
+    for i in allLinesF:
+        # print(f"Line: {i}")
+        if i[0] == str(msgID):
+            # remove the line from allLinesF
+            allLinesF.remove(i)
+            break
+        ctr += 1
+    # print(allLinesF)
+    # print(f"{ctr} and {oldLenAllLinesF} and {len(allLinesF)}")
+    
+    # print(allLinesF[ctr - 1]) # print new last line (when printed, won't include the "\n" which is present for "print(allLinesF)")
+    f = open(f"{threadtitle}", "w")
+    for line in allLinesF:
+        f.write(line)
+    f.close()
+    print(f"DLT: Msg id '{msgID}' has been delete!")
+
+    # if ctr == len(allLinesF):
+    #     print(allLinesF[ctr - 1])
+    #     allLinesF[ctr - 1].rstrip() # new messages are added with prefix "\n", so all g
 if __name__ == "__main__":
     # pass
     # print(EDTbreakCmdInput("EDT shrek1 hans 2 hello darkness my old friend"))
 
     CRT("shrek", "shrek1")
-    MSG("shrek1", "ogres are like onions", "shrek")
-    MSG("shrek1", "they smell?", "donkeh")
-    MSG("shrek1", "NO! Well, yes", "shrek")
-    EDT("shrek1", "donkeh", "3", "im shrek")
-    MSG("shrek1", "howd u edit ur msg like that?!", "donkeh")
+    MSG("shrek1", "ogres are like onions", "shrek") # msgID 1
+    MSG("shrek1", "they smell?", "donkeh") # msgID 2
+    DLT("shrek1", "1", "shrek")
+    # EDT("shrek1", "donkeh", "2", "im shrek")
+    # DLT("shrek1", "2", "donkeh")
+    # MSG("shrek1", "i just deleted m y msg", "donkeh") # msgID 2
+    # DLT("shrek1", "2", "shrek")
+
+    # f = open("shrek1", "r")
+    # lines = f.readlines()
+    # print(f"{len(lines)} and {lines}") # len() surprisngly doesnt include standalone msgs
 
     # lines = str(RDT("shrek1")).strip()
     # print(lines)
