@@ -219,7 +219,7 @@ if __name__ == "__main__":
                                     print(f'"{username}" is not owner of msgID "{EDTrespBroken[3]}" in thread "{EDTrespBroken[1]}"')
                                 else: # "Success" == edtRet
                                     serverSocket.sendto("SUCCESS".encode("utf-8"), clientAddr)
-                                    print(f'"{username}" delted msgID "{EDTrespBroken[3]}" in thread "{EDTrespBroken[1]}"!')
+                                    print(f'"{username}" deleted msgID "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"!')
 
                             # UPD
                             elif cmdMsgBroken[0] == "UPD":

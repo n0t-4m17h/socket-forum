@@ -273,6 +273,13 @@ def MSG(threadtitle, msg, username):
         allLinesF = f.readlines()
         f.close()
         msgID = len(allLinesF) # This ignores the standalone "\n" issue that arises from DLT() last msgs
+        # Get msgID considering files uploaded are also displayed
+        # filesInThread = 0
+        # for threads in store['threads']:
+        #     if threads['threadtitle'] == threadtitle:
+        #         filesInThread = len(threads['threadFiles'])
+        #         break
+        # msgID = len(allLinesF) - filesInThread # the len(allLinesF) ignores the standalone "\n" issue that arises from DLT() last msgs
         msgToAppend = f"\n{msgID} {username}: {msg}"
         f = open(f"{threadtitle}", "a") # open for appending
         f.write(msgToAppend)
@@ -363,7 +370,7 @@ def EDT(threadtitle, username, msgID, newMsg):
 # MSG() cmd was also edited due to this fnc leaving behind an empty line when deleting a line, so MSG() features
 # an IF for removing single "\n" lines from readlines() fnc
 def DLT(threadtitle, msgID, username):
-    # Remove msgID from data store
+    # # STAGE 1: Remove msgID from data store
     store = data_store.get()
     retMsg = "File Not Found"
     # First check if File exists
@@ -385,8 +392,9 @@ def DLT(threadtitle, msgID, username):
                             retMsg = "Success"
                             break
     data_store.set(store)
+    
     if retMsg == "Success":
-        # Now go delete the message in file (assuming username is owner of msg as per above)
+        # # STAGE 2: Now go delete the message in file (assuming username is owner of msg as per above)
         f = open(f"{threadtitle}", "r")
         allLinesF = f.readlines()
         f.close()
@@ -397,7 +405,23 @@ def DLT(threadtitle, msgID, username):
                 allLinesF.remove(i)
                 break
             ctr += 1
-        # Empty out file and rewrite the whole file in, except specific line will now be deleted.
+
+        # # STAGE 3: Decrement all msg IDs infile head-on (string wise). NOTE: the int()'s exception accounts for File Upload msgs
+        for j in range(ctr, len(allLinesF)):
+            # 'ctr' was where deleted msg was, now a new msg is there, so start there
+            # NEED TO GRAB up till first whitespace, not just [j][0] !!!! for e.g in "24", [j][0] == 2
+            partedLine = list(allLinesF[j].partition(" ")) # becomes ("<msgID>", " ", "yoda: hello there")
+            charMsgID = partedLine[0].strip()
+            try:
+                if isinstance(int(charMsgID), int) is True:
+                    newID = int(charMsgID) - 1
+                    partedLine[0] = str(newID)
+                    allLinesF[j] = ''.join(partedLine)
+            except:
+                # assume its a "File uplaoded" or sumn, keep looping
+                continue
+
+        # # STAGE 4: Empty out file and rewrite the whole file in, except specific line will now be deleted.
         f = open(f"{threadtitle}", "w")
         for line in allLinesF:
             f.write(line)

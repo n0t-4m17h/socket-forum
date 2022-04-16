@@ -248,11 +248,11 @@ if __name__ == "__main__":
                     else:
                         ret = str(RMV(clientSocket, serverPort, cmdList[1], currUsername, currCmd)).strip()
                         if "FILE NOT FOUND" in ret:
-                            print(f'Thread "{cmdList[1]}" not found, please try again...')
+                            print(f'Thread "{cmdList[1]}" not found')
                             currCmdEquals("ENTER CMD")
                             continue
                         elif "NOT OWNER" in ret:
-                            print(f'You are not the owner of thread "{cmdList[1]}", please try again...')
+                            print(f'You are not the owner of thread "{cmdList[1]}"')
                             currCmdEquals("ENTER CMD")
                             continue
                         elif "FILE REMOVED" in ret:
@@ -274,7 +274,7 @@ if __name__ == "__main__":
                         else:
                             print(f'==== Listing all threads')
                             print(ret)
-                            print(f'==== Done listing')
+                            print(f'==== Done listing!')
                             currCmdEquals("ENTER CMD")
                             continue
                 # MSG
@@ -290,11 +290,11 @@ if __name__ == "__main__":
                     else:
                         ret = MSG(clientSocket, serverPort, cmdList[1], cmdList[2], currCmd)
                         if ret == False:
-                            print("Invalid threadtitle, please try again...")
+                            print(f'Thread "{cmdList[1]}" not found')
                             currCmdEquals("ENTER CMD")
                             continue
                         else:
-                            print(f'Message sent in thread "{cmdList[1]}"')
+                            print(f'Message sent in thread "{cmdList[1]}"!')
                             currCmdEquals("ENTER CMD")
                             continue
                 # RDT
@@ -306,7 +306,7 @@ if __name__ == "__main__":
                     else:
                         ret = RDT(clientSocket, serverPort, cmdList[1], username, currCmd)
                         if ret == "FILE NOT FOUND":
-                            print("Invalid threadtitle, please try again...")
+                            print(f'Thread "{cmdList[1]}" not found')
                             currCmdEquals("ENTER CMD")
                             continue
                         elif ret == "EMPTY":
@@ -316,7 +316,7 @@ if __name__ == "__main__":
                         else:
                             print(f'==== Reading "{cmdList[1]}"')
                             print(ret)
-                            print(f'==== Done reading')
+                            print(f'==== Done reading!')
                             currCmdEquals("ENTER CMD")
                             continue
                 # EDT
@@ -336,17 +336,17 @@ if __name__ == "__main__":
                     # Check if msgID is a number (isinstance() may raise error if msgID == "hello" for e.g.)
                     try:
                         if isinstance(int(listToSend[2]), int) is False:
-                            print("Please enter an integer for message ID...")
+                            print("Please enter an integer for message ID")
                             currCmdEquals("ENTER CMD")
                             continue
                     except: # ValueError 
-                        print("Please enter an integer for message ID...")
+                        print("Please enter an integer for message ID")
                         currCmdEquals("ENTER CMD")
                         continue
                     #                                    <thread>     <username>   <msgID>        <newMsg>
                     ret = EDT(clientSocket, serverPort, listToSend[1], username, listToSend[2], listToSend[3], currCmd)
                     if ret == "FILE NOT FOUND":
-                            print("Invalid threadtitle, please try again...")
+                            print(f'Thread "{cmdList[1]}" not found')
                             currCmdEquals("ENTER CMD")
                             continue
                     elif ret == "MSGID IS OUT OF RANGE":
@@ -369,16 +369,16 @@ if __name__ == "__main__":
                         continue
                     try:
                         if isinstance(int(cmdList[2]), int) is False:
-                            print("Please enter an integer for message ID...")
+                            print("Please enter an integer for message ID")
                             currCmdEquals("ENTER CMD")
                             continue
                     except: # ValueError 
-                        print("Please enter an integer for message ID...")
+                        print("Please enter an integer for message ID")
                         currCmdEquals("ENTER CMD")
                         continue
                     ret = DLT(clientSocket, serverPort, cmdList[1], cmdList[2], currCmd)
                     if ret == "FILE NOT FOUND":
-                            print("Invalid threadtitle, please try again...")
+                            print(f'Thread "{cmdList[1]}" not found')
                             currCmdEquals("ENTER CMD")
                             continue
                     elif ret == "MSGID IS OUT OF RANGE":
@@ -420,7 +420,7 @@ if __name__ == "__main__":
                     print(f"ERROR: {e}")
                     continue
             # Upon "ctrl + c"
-            except KeyboardInterrupt:
-                XIT(clientSocket, serverPort, username)
+            # except KeyboardInterrupt:
+                # XIT(clientSocket, serverPort, username)
 
     clientSocket.close()

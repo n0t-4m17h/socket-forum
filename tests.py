@@ -165,7 +165,7 @@ def EDT(threadtitle, username, msgID, newMsg):
 
 # DOESNT decrement msgIDs (implem. seperately in serverHelpers.py)
 def DLT(threadtitle, msgID, username):
-    # Now go edit the message in file
+    # Now go delete the message in file
     f = open(f"{threadtitle}", "r")
     allLinesF = f.readlines()
     # oldLenAllLinesF = len(allLinesF)
@@ -183,13 +183,32 @@ def DLT(threadtitle, msgID, username):
         ctr += 1
     # print(allLinesF)
     # print(f"{ctr} and {oldLenAllLinesF} and {len(allLinesF)}")
-    
+
+    # # # Decrement all msg IDs head-on (string wise)
+    for j in range(ctr, len(allLinesF)):
+        # 'ctr' was where deleted msg was, now a new msg is there, so start there
+        # NEED TO GRAB up till first whitespace, not just [j][0] !!!! for e.g in "24", [j][0] == 2
+        print(f"allLinesF[j][0] is {allLinesF[j][0]}")
+        partedLine = list(allLinesF[j].partition(" ")) # becomes ("<msgID>", " ", "yoda: hello there")
+        charMsgID = partedLine[0].strip()
+        try:
+            if isinstance(int(charMsgID), int) is True:
+                newID = int(charMsgID) - 1
+                print("HI 2")
+                partedLine[0] = str(newID)
+                print("Decremented an ID")
+                allLinesF[j] = ''.join(partedLine)
+        except:
+            # assume its a "File uplaoded" or sumn, keep looping
+            print("Continued")
+            continue
+
     # print(allLinesF[ctr - 1]) # print new last line (when printed, won't include the "\n" which is present for "print(allLinesF)")
     f = open(f"{threadtitle}", "w")
     for line in allLinesF:
         f.write(line)
     f.close()
-    print(f"DLT: Msg id '{msgID}' has been delete!")
+    print(f"DLT: Msg id '{msgID}' has been deleted!")
 
     # if ctr == len(allLinesF):
     #     print(allLinesF[ctr - 1])
@@ -198,10 +217,26 @@ if __name__ == "__main__":
     # pass
     # print(EDTbreakCmdInput("EDT shrek1 hans 2 hello darkness my old friend"))
 
-    CRT("shrek", "shrek1")
-    MSG("shrek1", "ogres are like onions", "shrek") # msgID 1
-    MSG("shrek1", "they smell?", "donkeh") # msgID 2
-    DLT("shrek1", "1", "shrek")
+    # CRT("shrek", "shrek1")
+    # MSG("shrek1", "ogres are like onions", "shrek") # msgID 1
+    # MSG("shrek1", "they smell?", "donkeh") # msgID 2
+    # MSG("shrek1", "NO!", "shrek") # msgID 3
+    MSG("shrek1", "ok boomer", "donkeh") # msgID 4
+    # DLT("shrek1", "4", "shrek")
+
+    # just write in "Uplaoded file by deez"
+    # then DLT().....
+
+    # str1 = "24 yoda: may force bee"
+    # str2 = list(str1.partition(" "))
+    # print(str2)
+    # intID = int(str2[0])
+    # newID = intID - 1
+    # str2[0] = str(newID)
+    # str3 = ''.join(str2)
+    # print(type(str3))
+    # print(str3)
+
     # EDT("shrek1", "donkeh", "2", "im shrek")
     # DLT("shrek1", "2", "donkeh")
     # MSG("shrek1", "i just deleted m y msg", "donkeh") # msgID 2

@@ -58,6 +58,13 @@ data_store = {
                     'msgUser': "user2",
                     'msg': "", 
                 }
+            ],
+            'threadFiles': [
+                {
+                    'fileTitle': "",
+                    'fileID': 1,
+                    'fileUser': "user1"
+                }
             ]
         },
         {
@@ -70,6 +77,18 @@ data_store = {
                     'msgID': 1,
                     'msgUsername': "user1",
                     'msg': "", 
+                }
+            ],
+            'threadFiles': [
+                {
+                    'fileTitle': "",
+                    'fileID': 1,
+                    'fileUser': "user1"
+                },
+                {
+                    'fileTitle': "",
+                    'fileID': 2,
+                    'fileUser': "user1"
                 }
             ]
         }
