@@ -126,6 +126,7 @@ def DLT(clientSocket, serverPort, threadtitle, msgID, currCmd):
     return resp
 
 # let the OS pick a random Client Port -> "sock.bind(('localhost', 0))", selected port is in "sock.getsockname()"
+# REFER TO LAB02 !!!!****
 ##################
 #### MAIN Fnc ####
 ##################
@@ -363,7 +364,7 @@ if __name__ == "__main__":
                         continue
                 # DLT
                 elif cmdList[0] == "DLT":
-                    if len(cmdList) != 3: # should only be "DLT <title> <msgID>", everything after <title> is grouped as one string
+                    if len(cmdList) != 3: # should only be "DLT <title> <msgID>"
                         print("Incorrect syntax for DLT")
                         currCmdEquals("ENTER CMD")
                         continue

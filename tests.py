@@ -221,8 +221,8 @@ if __name__ == "__main__":
     # MSG("shrek1", "ogres are like onions", "shrek") # msgID 1
     # MSG("shrek1", "they smell?", "donkeh") # msgID 2
     # MSG("shrek1", "NO!", "shrek") # msgID 3
-    MSG("shrek1", "ok boomer", "donkeh") # msgID 4
-    # DLT("shrek1", "4", "shrek")
+    # MSG("shrek1", "ok boomer", "donkeh") # msgID 4
+    DLT("shrek1", "1", "shrek")
 
     # just write in "Uplaoded file by deez"
     # then DLT().....

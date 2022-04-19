@@ -167,7 +167,7 @@ if __name__ == "__main__":
                                     print(f'"{username}" sent a message in thread "{cmdMsgBroken[1]}"!')
                                 else:
                                     serverSocket.sendto("MSG TITLE INVALID".encode("utf-8"), clientAddr)
-                                    print(f'Failed to send "{username}"s message to thread "{cmdMsgBroken[1]}"')
+                                    print(f'"{username}" failed to send message to invalid thread "{cmdMsgBroken[1]}"')
                             # RDT
                             elif cmdMsgBroken[0] == "RDT":
                                 print(f'"{username}" issued RDT command')

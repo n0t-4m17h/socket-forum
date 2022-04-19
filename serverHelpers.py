@@ -272,6 +272,8 @@ def MSG(threadtitle, msg, username):
         f = open(f"{threadtitle}", "r") # First grab the no. of lines via readlines() by "r" mode
         allLinesF = f.readlines()
         f.close()
+        # Since msgs and file uploads are seperated message types
+        # msgID = len(allLinesF) - filesInThread # the len(allLinesF) ignores the standalone "\n" issue that arises from DLT() last msgs
         msgID = len(allLinesF) # This ignores the standalone "\n" issue that arises from DLT() last msgs
         # Get msgID considering files uploaded are also displayed
         # filesInThread = 0
@@ -279,7 +281,6 @@ def MSG(threadtitle, msg, username):
         #     if threads['threadtitle'] == threadtitle:
         #         filesInThread = len(threads['threadFiles'])
         #         break
-        # msgID = len(allLinesF) - filesInThread # the len(allLinesF) ignores the standalone "\n" issue that arises from DLT() last msgs
         msgToAppend = f"\n{msgID} {username}: {msg}"
         f = open(f"{threadtitle}", "a") # open for appending
         f.write(msgToAppend)
@@ -392,21 +393,26 @@ def DLT(threadtitle, msgID, username):
                             retMsg = "Success"
                             break
     data_store.set(store)
-    
     if retMsg == "Success":
         # # STAGE 2: Now go delete the message in file (assuming username is owner of msg as per above)
         f = open(f"{threadtitle}", "r")
         allLinesF = f.readlines()
-        f.close()
+        # f.close()
         ctr = 0
         for i in allLinesF:
-            if i[0] == str(msgID):
-                # remove the line from allLinesF
-                allLinesF.remove(i)
-                break
-            ctr += 1
-
-        # # STAGE 3: Decrement all msg IDs infile head-on (string wise). NOTE: the int()'s exception accounts for File Upload msgs
+            # Break string up and get the msgID and compare (msgID could be 2 or more digits, so prev method wont work for that case)
+            partedLine = list(i.partition(" ")) # becomes ("<msgID>", " ", "<user>: <msg>")
+            charMsgID = partedLine[0].strip()
+            try: # This accounts for int() error of non-numerical strings, for e.g. "File Uploaded"
+                if int(charMsgID) == msgID:
+                    allLinesF.remove(i)
+                    break # Dont increment if msg found
+                else:
+                    ctr += 1
+            except:
+                ctr += 1
+                continue
+        # # STAGE 3: Decrement all msg IDs infile head-on (string wise). NOTE: the int()'s exception accounts for "File Upload" msgs
         for j in range(ctr, len(allLinesF)):
             # 'ctr' was where deleted msg was, now a new msg is there, so start there
             # NEED TO GRAB up till first whitespace, not just [j][0] !!!! for e.g in "24", [j][0] == 2
