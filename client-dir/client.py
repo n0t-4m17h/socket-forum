@@ -126,8 +126,12 @@ def DLT(clientSocket, serverPort, threadtitle, msgID, currCmd):
     return resp
 
 # CMD 9:
-def UPD(clientSocket, serverPort, threadtitle, msgID, currCmd):
-    pass
+def UPD(clientSocket, serverPort, threadtitle, filename, currCmd):
+    if ("UPD RESPONSE" in currCmd) is False: # this allows Client to skip sending and go waiting for Packet, incase of socket.timeout
+        clientSocket.sendto(f"UPD {threadtitle} {filename}".encode("utf-8"), ('localhost', int(serverPort)))
+    currCmdEquals("CMD INPUTTED WAITING UPD RESPONSE")
+    resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+    return resp
 
 # CMD 10:
 def DWN(clientSocket, serverPort, threadtitle, msgID, currCmd):
@@ -404,11 +408,35 @@ if __name__ == "__main__":
                         continue
                 # UPD
                 elif cmdList[0] == "UPD":
-                    # Tell Server to open TCP connection, then do file transfer
-                    # once done, close TCP connection
-                    pass
+                    if len(cmdList) != 3: # should only be "UPD <title> <filename>"
+                        print("Incorrect syntax for UPD")
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    # Give Server the command && Wait for server response
+                    ret = UPD(clientSocket, serverPort, cmdList[1], cmdList[2], currCmd)
+                    if ret == "FILE NOT FOUND":
+                        print(f'Thread "{cmdList[1]}" not found')
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    elif ret == "FILE EXISTS IN THREAD":
+                        print(f'File "{cmdList[2]}" already exists in thread "{cmdList[1]}"')
+                        currCmdEquals("ENTER CMD")
+                        continue
+                    else: # ret == "SUCCESS" 
+                        # Greenlit by Server, now do this:
+                        
+                        # Tell Server to open TCP connection, then do file transfer
+
+                        # once done, close TCP connection
+                        print(f'File "{cmdList[2]}" successfully uploaded to "{cmdList[1]}"!')
+                        currCmdEquals("ENTER CMD")
+                        continue
                 # DWN
                 elif cmdList[0] == "DWN":
+                    if len(cmdList) != 3: # should only be "DWN <title> <filename>"
+                        print("Incorrect syntax for DWN")
+                        currCmdEquals("ENTER CMD")
+                        continue
                     # Tell Server to open TCP connection, then do file transfer
                     # once done, close TCP connection
                     pass

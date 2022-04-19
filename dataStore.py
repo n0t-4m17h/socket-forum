@@ -61,7 +61,7 @@ data_store = {
             ],
             'threadFiles': [
                 {
-                    'fileTitle': "",
+                    'filetitle': "",
                     'fileID': 1,
                     'fileUser': "user1"
                 }

@@ -210,21 +210,34 @@ if __name__ == "__main__":
                                 dltRet = DLT(cmdMsgBroken[1], int(cmdMsgBroken[2]), username)
                                 if "File Not Found" == dltRet:
                                     serverSocket.sendto("FILE NOT FOUND".encode("utf-8"), clientAddr)
-                                    print(f'"{username}" failed to delete msg in non-existent thread "{EDTrespBroken[1]}"')
+                                    print(f'"{username}" failed to delete msg in non-existent thread "{cmdMsgBroken[1]}"')
                                 elif "MsgID Is Out Of Range" == dltRet:
                                     serverSocket.sendto("MSGID IS OUT OF RANGE".encode("utf-8"), clientAddr)
-                                    print(f'"{username}"s msgID "{EDTrespBroken[3]}" is out of range in thread "{EDTrespBroken[1]}"')
+                                    print(f'"{username}"s msgID "{cmdMsgBroken[2]}" is out of range in thread "{cmdMsgBroken[1]}"')
                                 elif "User Is Not Owner Of Msg" == dltRet:
                                     serverSocket.sendto("USER IS NOT OWNER".encode("utf-8"), clientAddr)
-                                    print(f'"{username}" is not owner of msgID "{EDTrespBroken[3]}" in thread "{EDTrespBroken[1]}"')
-                                else: # "Success" == edtRet
+                                    print(f'"{username}" is not owner of msgID "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"')
+                                else: # "Success" == dltRet
                                     serverSocket.sendto("SUCCESS".encode("utf-8"), clientAddr)
                                     print(f'"{username}" deleted msgID "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"!')
                             # UPD
                             elif cmdMsgBroken[0] == "UPD":
                                 print(f'"{username}" issued UPD command')
                                 currCmd = "UPD"
-                                pass
+                                #               <thread>             <filename>
+                                updRet = UPD(cmdMsgBroken[1], int(cmdMsgBroken[2]), username)
+                                if "File Not Found" == updRet:
+                                    serverSocket.sendto("FILE NOT FOUND".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" failed to upload file to non-existent thread "{cmdMsgBroken[1]}"')
+                                elif "File Exists In Thread" == updRet:
+                                    serverSocket.sendto("FILE EXISTS IN THREAD".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" failed to upload already-existent file "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"')
+                                else: # "Success" == updRet
+                                    serverSocket.sendto("SUCCESS".encode("utf-8"), clientAddr)
+                                    # Now Open TCP socket && read in file's contents
+                                    
+
+                                    print(f'"{username}" uploaded file "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"!')
                             # DWN
                             elif cmdMsgBroken[0] == "DWN":
                                 print(f'"{username}" issued DWN command')

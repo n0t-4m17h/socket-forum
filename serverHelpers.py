@@ -168,6 +168,21 @@ def decrementMsgIDs(threadtitle, dltMsgID):
                     msgs['msgID'] += -1
     data_store.set(store)
 
+# (Called by UPD) Adds the metadata of newly uploaded file to datastore
+# Assumes given threadtitle and filename are all correct (inclu. any other checks)
+def UPDfileToStore(threadtitle, newFiletitle, username):
+    store = data_store.get()
+    for thread in store['threads']:
+        if thread['threadtitle'] == threadtitle:
+            fileID = len(thread['threadFiles']) + 1
+            thread['threadFiles'].append({
+                "fileTitle": newFiletitle,
+                "fileID": fileID,
+                "fileUser": username
+            })
+            break
+    data_store.set(store)
+            
 
 #################
 ### CMDS fncs ###
@@ -192,8 +207,8 @@ def CRT(threadtitle, username):
             "threadID": threadID,
             "threadOwner": username,
             "threadMembers": [username],
-            "threadMsgs": []
-            # "threadFiles": []
+            "threadMsgs": [],
+            "threadFiles": []
         })
         data_store.set(store)
         # Now add file to Server's CWD
@@ -204,8 +219,8 @@ def CRT(threadtitle, username):
 
 
 # Fnc first checks CWD for thread, then checks the give user is owner of thread, then decrements 1 from 
-# the IDs of all threads created after the given thread (if any), then removes thread from dataStore, then
-# removes file with threadtitle from CWD. 
+# the IDs of all threads created after the given thread (if any), then removes thread from dataStore,
+# then removes file with threadtitle from CWD. 
 def RMV(threadtitle, username):
     store = data_store.get()
     # FIRST check CWD for <threadtitle>
@@ -217,12 +232,16 @@ def RMV(threadtitle, username):
             return "Not Owner"
         # If so, decrement all threadIDs of threads created after thread-to-be-removed
         decrementThreadIDs(threadtitle)
-        # FINALLY delete the thread file from CWD and remove from data store
+        # FINALLY remove from data store and delete the thread file from CWD (including threadFiles !!!!)
         for thread in store['threads']:
             if thread['threadtitle'] == threadtitle:
+                # Remove all matching threadFiles from CWD #### CHECK WITH HENRY IF THIS IS OK
+                for file in thread['threadFiles']:
+                    os.remove(f"{file['fileTitle']}") # removes files from server's cwd
+                # Remove whole thread
                 store['threads'].remove(thread)
                 data_store.set(store) # update data store accordingly
-        os.remove(f"{threadtitle}") # rmv thread from server's cwd
+        os.remove(f"{threadtitle}") # RMV thread from server's cwd
         return "Thread Removed"
     except FileNotFoundError:
         return "File Not Found"
@@ -273,14 +292,13 @@ def MSG(threadtitle, msg, username):
         allLinesF = f.readlines()
         f.close()
         # Since msgs and file uploads are seperated message types
-        # msgID = len(allLinesF) - filesInThread # the len(allLinesF) ignores the standalone "\n" issue that arises from DLT() last msgs
-        msgID = len(allLinesF) # This ignores the standalone "\n" issue that arises from DLT() last msgs
         # Get msgID considering files uploaded are also displayed
-        # filesInThread = 0
-        # for threads in store['threads']:
-        #     if threads['threadtitle'] == threadtitle:
-        #         filesInThread = len(threads['threadFiles'])
-        #         break
+        filesInThread = 0
+        for threads in store['threads']:
+            if threads['threadtitle'] == threadtitle:
+                filesInThread = len(threads['threadFiles'])
+                break
+        msgID = len(allLinesF) - filesInThread # the len(allLinesF) ignores the standalone "\n" issue that arises from DLT() last msgs
         msgToAppend = f"\n{msgID} {username}: {msg}"
         f = open(f"{threadtitle}", "a") # open for appending
         f.write(msgToAppend)
@@ -434,3 +452,26 @@ def DLT(threadtitle, msgID, username):
         f.close()
     return retMsg
 
+
+# Checks if file is ready to be added to data store and server's CWD
+def UPD(threadtitle, filename, username):
+    newFiletitle = threadtitle + "-" + filename
+    store = data_store.get()
+    retMsg = "File Not Found"
+    # Check if thread exists
+    for threads in store['threads']:
+        if threads['threadtitle'] == threadtitle:
+            retMsg = 'File Exists In Thread'
+            fileExists = False
+            # Check if file already exists under thread
+            for files in threads['threadFiles']:
+                if files['filetitle'] == newFiletitle:
+                    fileExists = True
+                    break
+            if fileExists is False:
+                retMsg = "Success"
+
+    if retMsg == "Success":
+        # Once ALL checks are passed, add meta to DataStore
+        UPDfileToStore(threadtitle, newFiletitle, username)
+    return retMsg
