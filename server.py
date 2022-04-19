@@ -220,12 +220,15 @@ if __name__ == "__main__":
                                 else: # "Success" == edtRet
                                     serverSocket.sendto("SUCCESS".encode("utf-8"), clientAddr)
                                     print(f'"{username}" deleted msgID "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"!')
-
                             # UPD
                             elif cmdMsgBroken[0] == "UPD":
+                                print(f'"{username}" issued UPD command')
+                                currCmd = "UPD"
                                 pass
                             # DWN
                             elif cmdMsgBroken[0] == "DWN":
+                                print(f'"{username}" issued DWN command')
+                                currCmd = "DWN"
                                 pass
                         
                         # while 3's try-excepts
@@ -234,6 +237,9 @@ if __name__ == "__main__":
                             if (str(e).rstrip()) == "timed out":
                                 print("Client's packet timed out, retrying...")
                                 # print(f"Last currCmd value: {currCmd}") # FOR DEBUGGING
+                                continue
+                            else:
+                                print(f"ERROR: {e}")
                                 continue
                         # Upon "ctrl + c"
                         except KeyboardInterrupt:
@@ -244,7 +250,10 @@ if __name__ == "__main__":
                     # Upon socket.timeout()
                     if (str(e).rstrip()) == "timed out":
                         print("Client's packet timed out, retrying...")
-                        print(f"Last currCmd value: {currCmd}") # FOR DEBUGGING
+                        # print(f"Last currCmd value: {currCmd}") # FOR DEBUGGING
+                        continue
+                    else:
+                        print(f"ERROR: {e}")
                         continue
                 # Upon "ctrl + c"
                 except KeyboardInterrupt:

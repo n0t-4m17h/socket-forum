@@ -125,6 +125,14 @@ def DLT(clientSocket, serverPort, threadtitle, msgID, currCmd):
     resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
     return resp
 
+# CMD 9:
+def UPD(clientSocket, serverPort, threadtitle, msgID, currCmd):
+    pass
+
+# CMD 10:
+def DWN(clientSocket, serverPort, threadtitle, msgID, currCmd):
+    pass
+
 # let the OS pick a random Client Port -> "sock.bind(('localhost', 0))", selected port is in "sock.getsockname()"
 # REFER TO LAB02 !!!!****
 ##################
