@@ -245,10 +245,12 @@ if __name__ == "__main__":
                                         # Client now creates its connection socket and connects to Server's TCP socket
                                         connectionSocket, clientTCPaddr = serverSocketTCP.accept()
                                         # print(f'New TCP connection from: "{clientTCPaddr}" of user "{username}"')
-                                        # connectionSocket.send("CONNECTED".encode("utf-8"))
 
                                         # Recieve file as BYTES and write them into cwd as BYTEs ('wb')
-                                        fileContentsResp = connectionSocket.recv(2048)
+                                        # First ask for the size of the file (UDP), then ask for the file's contents
+                                        fileSizeStr = str(serverSocket.recvfrom(2048)[0], "utf-8").strip()
+                                        # Now wait for the file itself (TCP)
+                                        fileContentsResp = connectionSocket.recv(int(fileSizeStr))
                                         newFileName = str(cmdMsgBroken[1]) + "-" + str(cmdMsgBroken[2])
                                         f = open(newFileName.strip(), "wb")
                                         f.write(fileContentsResp)
@@ -256,8 +258,7 @@ if __name__ == "__main__":
                                         # print("Closing TCP connection AND socket")
                                         connectionSocket.close()
                                         serverSocketTCP.close()
-
-                                        # print(f'"{username}" uploaded file "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"!')
+                                        print(f'"{username}"s uploaded file "{cmdMsgBroken[2]}" to thread "{cmdMsgBroken[1]}"!')
                             # DWN
                             elif cmdMsgBroken[0] == "DWN":
                                 print(f'"{username}" issued DWN command')

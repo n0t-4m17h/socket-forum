@@ -176,7 +176,7 @@ def UPDfileToStore(threadtitle, newFiletitle, username):
         if thread['threadtitle'] == threadtitle:
             fileID = len(thread['threadFiles']) + 1
             thread['threadFiles'].append({
-                "fileTitle": newFiletitle,
+                "filetitle": newFiletitle,
                 "fileID": fileID,
                 "fileUser": username
             })
@@ -235,9 +235,9 @@ def RMV(threadtitle, username):
         # FINALLY remove from data store and delete the thread file from CWD (including threadFiles !!!!)
         for thread in store['threads']:
             if thread['threadtitle'] == threadtitle:
-                # Remove all matching threadFiles from CWD #### CHECK WITH HENRY IF THIS IS OK
+                # Remove all matching threadFiles from CWD
                 for file in thread['threadFiles']:
-                    os.remove(f"{file['fileTitle']}") # removes files from server's cwd
+                    os.remove(f"{file['filetitle']}") # removes files from server's cwd
                 # Remove whole thread
                 store['threads'].remove(thread)
                 data_store.set(store) # update data store accordingly

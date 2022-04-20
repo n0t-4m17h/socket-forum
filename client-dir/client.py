@@ -414,6 +414,7 @@ if __name__ == "__main__":
                         continue
                     # Give Server the command && Wait for server response
                     ret = UPD(clientSocket, serverPort, cmdList[1], cmdList[2], currCmd)
+                    print("UPD fnc passed")
                     if ret == "FILE NOT FOUND":
                         print(f'Thread "{cmdList[1]}" not found')
                         currCmdEquals("ENTER CMD")
@@ -430,18 +431,16 @@ if __name__ == "__main__":
                             # Server's TCP socket open, now connect to it
                             clientSocketTCP = socket(AF_INET, SOCK_STREAM)
                             clientSocketTCP.connect(('localhost', int(serverPort)))
-                            # resp = clientSocketTCP.recv(2048).decode("utf-8")
-                            # print(f"resp = {resp}") # "CONNECTED"
                             # Read in file as BYTES and send it as BYTES
                             f = open(cmdList[2], "rb").read()
-                            # f.close()
-                            # contLen = len(f)
+                            contLen = len(f) # in bytes
+                            # First send the expected file size (UDP)
+                            clientSocket.sendto(f"{contLen}".encode("utf-8"), ('localhost', int(serverPort)))
+                            # Now send the whole file (TCP)
                             clientSocketTCP.sendall(f)
-
                             # once done, close TCP connection
-                            print("Closing TCP connection")
                             clientSocketTCP.close()
-                            # print(f'File "{cmdList[2]}" successfully uploaded to "{cmdList[1]}"!')
+                            print(f'File "{cmdList[2]}" uploaded to "{cmdList[1]}"!')
                             currCmdEquals("ENTER CMD")
                         continue
                 # DWN
