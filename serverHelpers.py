@@ -455,7 +455,7 @@ def DLT(threadtitle, msgID, username):
 
 # Checks if file is ready to be added to data store and server's CWD
 def UPD(threadtitle, filename, username):
-    newFiletitle = threadtitle + "-" + filename
+    newFiletitle = str(threadtitle + "-" + filename)
     store = data_store.get()
     retMsg = "File Not Found"
     # Check if thread exists
@@ -467,11 +467,16 @@ def UPD(threadtitle, filename, username):
             for files in threads['threadFiles']:
                 if files['filetitle'] == newFiletitle:
                     fileExists = True
-                    break
+                    break # Should jump to next line
             if fileExists is False:
                 retMsg = "Success"
 
     if retMsg == "Success":
         # Once ALL checks are passed, add meta to DataStore
         UPDfileToStore(threadtitle, newFiletitle, username)
+        # Now write to thread file
+        msgToAppend = f"\n{username} uploaded {filename}"
+        f = open(f"{threadtitle}", "a") # open for appending
+        f.write(msgToAppend)
+        f.close()
     return retMsg

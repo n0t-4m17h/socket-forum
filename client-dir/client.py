@@ -422,14 +422,27 @@ if __name__ == "__main__":
                         print(f'File "{cmdList[2]}" already exists in thread "{cmdList[1]}"')
                         currCmdEquals("ENTER CMD")
                         continue
-                    else: # ret == "SUCCESS" 
-                        # Greenlit by Server, now do this:
-                        
+                    else: # ret == "SUCCESS"
                         # Tell Server to open TCP connection, then do file transfer
+                        clientSocket.sendto("UDP REQUESTING CONNECTION".encode("utf-8"), ('localhost', int(serverPort)))
+                        resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+                        if resp == "TCP OPEN":
+                            # Server's TCP socket open, now connect to it
+                            clientSocketTCP = socket(AF_INET, SOCK_STREAM)
+                            clientSocketTCP.connect(('localhost', int(serverPort)))
+                            # resp = clientSocketTCP.recv(2048).decode("utf-8")
+                            # print(f"resp = {resp}") # "CONNECTED"
+                            # Read in file as BYTES and send it as BYTES
+                            f = open(cmdList[2], "rb").read()
+                            # f.close()
+                            # contLen = len(f)
+                            clientSocketTCP.sendall(f)
 
-                        # once done, close TCP connection
-                        print(f'File "{cmdList[2]}" successfully uploaded to "{cmdList[1]}"!')
-                        currCmdEquals("ENTER CMD")
+                            # once done, close TCP connection
+                            print("Closing TCP connection")
+                            clientSocketTCP.close()
+                            # print(f'File "{cmdList[2]}" successfully uploaded to "{cmdList[1]}"!')
+                            currCmdEquals("ENTER CMD")
                         continue
                 # DWN
                 elif cmdList[0] == "DWN":

@@ -224,8 +224,8 @@ if __name__ == "__main__":
                             elif cmdMsgBroken[0] == "UPD":
                                 print(f'"{username}" issued UPD command')
                                 currCmd = "UPD"
-                                #               <thread>             <filename>
-                                updRet = UPD(cmdMsgBroken[1], int(cmdMsgBroken[2]), username)
+                                #               <thread>         <filename>
+                                updRet = UPD(cmdMsgBroken[1], cmdMsgBroken[2], username)
                                 if "File Not Found" == updRet:
                                     serverSocket.sendto("FILE NOT FOUND".encode("utf-8"), clientAddr)
                                     print(f'"{username}" failed to upload file to non-existent thread "{cmdMsgBroken[1]}"')
@@ -234,10 +234,30 @@ if __name__ == "__main__":
                                     print(f'"{username}" failed to upload already-existent file "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"')
                                 else: # "Success" == updRet
                                     serverSocket.sendto("SUCCESS".encode("utf-8"), clientAddr)
-                                    # Now Open TCP socket && read in file's contents
-                                    
+                                    respMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
+                                    if respMsg == "UDP REQUESTING CONNECTION":
+                                        # Now Open TCP socket && read in file's contents
+                                        serverSocketTCP = socket(AF_INET, SOCK_STREAM)  # sock_stream == TCP socket
+                                        serverSocketTCP.bind(('localhost', int(serverPort)))
+                                        serverSocketTCP.listen(1)
+                                        # Send via UDP, that TCP socket is open
+                                        serverSocket.sendto("TCP OPEN".encode("utf-8"), clientAddr) #################
+                                        # Client now creates its connection socket and connects to Server's TCP socket
+                                        connectionSocket, clientTCPaddr = serverSocketTCP.accept()
+                                        # print(f'New TCP connection from: "{clientTCPaddr}" of user "{username}"')
+                                        # connectionSocket.send("CONNECTED".encode("utf-8"))
 
-                                    print(f'"{username}" uploaded file "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"!')
+                                        # Recieve file as BYTES and write them into cwd as BYTEs ('wb')
+                                        fileContentsResp = connectionSocket.recv(2048)
+                                        newFileName = str(cmdMsgBroken[1]) + "-" + str(cmdMsgBroken[2])
+                                        f = open(newFileName.strip(), "wb")
+                                        f.write(fileContentsResp)
+                                        f.close()
+                                        # print("Closing TCP connection AND socket")
+                                        connectionSocket.close()
+                                        serverSocketTCP.close()
+
+                                        # print(f'"{username}" uploaded file "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"!')
                             # DWN
                             elif cmdMsgBroken[0] == "DWN":
                                 print(f'"{username}" issued DWN command')
