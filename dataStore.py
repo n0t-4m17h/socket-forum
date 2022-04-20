@@ -43,7 +43,7 @@ data_store = {
     ],
     'threads': [
         {
-            'threadtitle': "",
+            'threadtitle': "comp3331",
             'threadID': 1,  # not needed??
             'threadOwner': "user1",
             'threadMembers': ["user1", "user2"], # not needed??
@@ -61,7 +61,7 @@ data_store = {
             ],
             'threadFiles': [
                 {
-                    'filetitle': "",
+                    'filetitle': "comp3331-shrek.exe",
                     'fileID': 1,
                     'fileUser': "user1"
                 }

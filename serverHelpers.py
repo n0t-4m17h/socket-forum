@@ -480,3 +480,23 @@ def UPD(threadtitle, filename, username):
         f.write(msgToAppend)
         f.close()
     return retMsg
+
+
+# Checks if requested file can be downloaded (thread must be valid and file must exist under thread)
+def DWN(threadtitle, filename, username):
+    expectedFiletitle = str(threadtitle + "-" + filename)
+    store = data_store.get()
+    retMsg = "File Not Found"
+    # Check if thread exists
+    for threads in store['threads']:
+        if threads['threadtitle'] == threadtitle:
+            retMsg = 'File Not In Thread'
+            fileExists = False
+            # Check if file does in fact exist under thread
+            for files in threads['threadFiles']:
+                if files['filetitle'] == expectedFiletitle:
+                    fileExists = True
+                    break # Should jump to next line
+            if fileExists is False:
+                retMsg = "Success"
+    return retMsg

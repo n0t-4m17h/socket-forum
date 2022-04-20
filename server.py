@@ -226,7 +226,7 @@ if __name__ == "__main__":
                                 currCmd = "UPD"
                                 #               <thread>         <filename>
                                 updRet = UPD(cmdMsgBroken[1], cmdMsgBroken[2], username)
-                                if "File Not Found" == updRet:
+                                if "File Not Found" == updRet: # THis means "threadtitle" is invalid !!!
                                     serverSocket.sendto("FILE NOT FOUND".encode("utf-8"), clientAddr)
                                     print(f'"{username}" failed to upload file to non-existent thread "{cmdMsgBroken[1]}"')
                                 elif "File Exists In Thread" == updRet:
@@ -265,7 +265,46 @@ if __name__ == "__main__":
                             elif cmdMsgBroken[0] == "DWN":
                                 print(f'"{username}" issued DWN command')
                                 currCmd = "DWN"
-                                pass
+                                #               <thread>         <filename>
+                                dwnRet = DWN(cmdMsgBroken[1], cmdMsgBroken[2], username)
+                                if "File Not Found" == dwnRet: # THis means "threadtitle" is invalid !!!
+                                    serverSocket.sendto("FILE NOT FOUND".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" failed to download a file from non-existent thread "{cmdMsgBroken[1]}"')
+                                elif "File Not In Thread" == dwnRet:
+                                    serverSocket.sendto("FILE NOT IN THREAD".encode("utf-8"), clientAddr)
+                                    print(f'"{username}" failed to download a non-existent file "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"')
+                                else: # "Success" == updRet
+                                    serverSocket.sendto("SUCCESS".encode("utf-8"), clientAddr)
+                                    # Client waits for connection "recv"
+                                    respMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
+                                    if respMsg == "UDP REQUESTING CONNECTION":
+                                        # Now Open TCP socket && read in file's contents
+                                        serverSocketTCP = socket(AF_INET, SOCK_STREAM)  # sock_stream == TCP socket
+                                        serverSocketTCP.bind(('localhost', int(serverPort)))
+                                        serverSocketTCP.listen(1)
+                                        # Send via UDP, that TCP socket is open
+                                        serverSocket.sendto("TCP OPEN".encode("utf-8"), clientAddr)
+                                        # Client now creates its connection socket and connects to Server's TCP socket
+                                        connectionSocket, clientTCPaddr = serverSocketTCP.accept()
+                                        # Read in file as BYTES and send it as BYTES
+                                        expectedFiletitle = str(cmdMsgBroken[1] + "-" + cmdMsgBroken[2])
+                                        f = open(expectedFiletitle, "rb").read()
+                                        contLen = len(f) # in bytes
+                                        # First send the expected file size (UDP)
+                                        serverSocket.sendto(f"{contLen}".encode("utf-8"), clientAddr)
+                                        # Now send the whole file (TCP)
+                                        serverSocketTCP.sendall(f)
+                                        # once done, close TCP connection
+                                        connectionSocket.close()
+                                        serverSocketTCP.close()
+                                        # Get recieved confirmation from Client
+                                        respMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
+                                        if respMsg == "FILE DOWNLOADED":
+                                            print(f'"{username}" downloaded file "{cmdMsgBroken[2]}" from thread "{cmdMsgBroken[1]}"!')
+                                        else: 
+                                            print(f'"{username}" failed to downloaded file "{cmdMsgBroken[2]}" from thread "{cmdMsgBroken[1]}"')
+                                        continue
+
                         
                         # while 3's try-excepts
                         except Exception as e:
