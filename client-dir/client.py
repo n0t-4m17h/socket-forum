@@ -425,22 +425,37 @@ if __name__ == "__main__":
                         continue
                     else: # ret == "SUCCESS"
                         # Tell Server to open TCP connection, then do file transfer
-                        clientSocket.sendto("UDP REQUESTING CONNECTION".encode("utf-8"), ('localhost', int(serverPort)))
-                        resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
-                        if resp == "TCP OPEN":
-                            # Server's TCP socket open, now connect to it
-                            clientSocketTCP = socket(AF_INET, SOCK_STREAM)
-                            clientSocketTCP.connect(('localhost', int(serverPort)))
-                            # Read in file as BYTES and send it as BYTES
-                            f = open(cmdList[2], "rb").read()
-                            contLen = len(f) # in bytes
-                            # First send the expected file size (UDP)
-                            clientSocket.sendto(f"{contLen}".encode("utf-8"), ('localhost', int(serverPort)))
-                            # Now send the whole file (TCP)
-                            clientSocketTCP.sendall(f)
-                            # once done, close TCP connection
-                            clientSocketTCP.close()
-                            print(f'File "{cmdList[2]}" uploaded to "{cmdList[1]}"!')
+                        print("After SUCCESS")
+                        resp = ""
+                        if currCmd != "UDP REQ SENT WAITING FOR RESP": # prevents resending a packet incase of socket timeout
+                            clientSocket.sendto("UDP REQUESTING CONNECTION".encode("utf-8"), ('localhost', int(serverPort)))
+                            currCmdEquals("UDP REQ SENT WAITING FOR RESP") # to pass next IF
+                            print("sent req connection")
+                        if currCmd == "UDP REQ SENT WAITING FOR RESP":
+                            print("waiting for response")
+                            resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+                        if currCmd == "FILE SENT WAITING CONFIRMATION" or resp == "TCP OPEN":
+                            if ("FILE SENT" in currCmd) is False: # can skip to waiting for confirmation, in cases of socket timeout
+                                # Server's TCP socket open, now connect to it
+                                clientSocketTCP = socket(AF_INET, SOCK_STREAM)
+                                clientSocketTCP.connect(('localhost', int(serverPort)))
+                                # Read in file as BYTES and send it as BYTES
+                                f = open(cmdList[2], "rb").read()
+                                contLen = len(f) # in bytes
+                                # First send the expected file size (UDP)
+                                clientSocket.sendto(f"{contLen}".encode("utf-8"), ('localhost', int(serverPort)))
+                                # Now send the whole file (TCP)
+                                clientSocketTCP.sendall(f)
+                                # once done, close TCP connection
+                                clientSocketTCP.close()
+                                # Get recieved confirmation from Server
+                            currCmdEquals("FILE SENT WAITING CONFIRMATION")
+                            resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+                            if resp == "FILE UPLOADED":
+                                print(f'File "{cmdList[2]}" uploaded to "{cmdList[1]}"!')
+                            else: 
+                                # Ask user to try again
+                                print(f'File "{cmdList[2]}" failed to upload to "{cmdList[1]}", please try again...')
                             currCmdEquals("ENTER CMD")
                         continue
                 # DWN

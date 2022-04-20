@@ -241,7 +241,7 @@ if __name__ == "__main__":
                                         serverSocketTCP.bind(('localhost', int(serverPort)))
                                         serverSocketTCP.listen(1)
                                         # Send via UDP, that TCP socket is open
-                                        serverSocket.sendto("TCP OPEN".encode("utf-8"), clientAddr) #################
+                                        serverSocket.sendto("TCP OPEN".encode("utf-8"), clientAddr)
                                         # Client now creates its connection socket and connects to Server's TCP socket
                                         connectionSocket, clientTCPaddr = serverSocketTCP.accept()
                                         # print(f'New TCP connection from: "{clientTCPaddr}" of user "{username}"')
@@ -258,7 +258,9 @@ if __name__ == "__main__":
                                         # print("Closing TCP connection AND socket")
                                         connectionSocket.close()
                                         serverSocketTCP.close()
-                                        print(f'"{username}"s uploaded file "{cmdMsgBroken[2]}" to thread "{cmdMsgBroken[1]}"!')
+                                        # Send via UDP, that the file has been uploaded
+                                        serverSocket.sendto("FILE UPLOADED".encode("utf-8"), clientAddr)
+                                        print(f'"{username}" uploaded file "{cmdMsgBroken[2]}" to thread "{cmdMsgBroken[1]}"!')
                             # DWN
                             elif cmdMsgBroken[0] == "DWN":
                                 print(f'"{username}" issued DWN command')
