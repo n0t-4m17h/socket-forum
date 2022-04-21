@@ -476,28 +476,34 @@ if __name__ == "__main__":
                         continue
                     else: # ret == "SUCCESS"
                         # Tell Server to open TCP connection, then do file transfer
-                        clientSocket.sendto("UDP REQUESTING CONNECTION".encode("utf-8"), ('localhost', int(serverPort)))
-                        currCmdEquals("UDP REQ SENT WAITING FOR RESP") # to pass next IF
-                        resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+                        resp = ""
+                        if currCmd != "UDP REQ SENT WAITING FOR RESP":
+                            clientSocket.sendto("UDP REQUESTING CONNECTION".encode("utf-8"), ('localhost', int(serverPort)))
+                            currCmdEquals("UDP REQ SENT WAITING FOR RESP") # to pass next IF
+                        if currCmd == "UDP REQ SENT WAITING FOR RESP":
+                            print("Waiting for 'TCP OPEN'")
+                            resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
+                            print("Got it!!")
                         if resp == "TCP OPEN":
                             # Server's TCP socket open, now connect to it
                             clientSocketTCP = socket(AF_INET, SOCK_STREAM)
                             clientSocketTCP.connect(('localhost', int(serverPort)))
                             # Recieve expected File SIZE
+                            print("TCP connection set up now waiting for file size")
                             fileSizeStr = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
                             # Save incoming file in BYTES
                             fileContentsResp = clientSocketTCP.recv(int(fileSizeStr))
+                            clientSocketTCP.close()
                             # Save into client's CWD
                             f = open(cmdList[2].strip(), "wb") # this filename WON'T include threadtitle
                             f.write(fileContentsResp)
                             f.close()
                             # Send via UDP, that the file has been downloaded
                             clientSocket.sendto("FILE DOWNLOADED".encode("utf-8"), ('localhost', int(serverPort)))
-                            clientSocketTCP.close()
-                        currCmdEquals("FILE SENT WAITING CONFIRMATION")
-                        resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip() # "FILE UPLAODED"
-
-                        
+                            print(f'File "{cmdList[2]}" downloaded from "{cmdList[1]}"!')
+                            currCmdEquals("ENTER CMD")
+                            continue
+                        continue
                 # XIT
                 elif cmdList[0] == "XIT":
                     if len(cmdList) != 1:

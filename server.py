@@ -273,30 +273,36 @@ if __name__ == "__main__":
                                 elif "File Not In Thread" == dwnRet:
                                     serverSocket.sendto("FILE NOT IN THREAD".encode("utf-8"), clientAddr)
                                     print(f'"{username}" failed to download a non-existent file "{cmdMsgBroken[2]}" in thread "{cmdMsgBroken[1]}"')
-                                else: # "Success" == updRet
+                                else: # "Success" == dwnRet
                                     serverSocket.sendto("SUCCESS".encode("utf-8"), clientAddr)
                                     # Client waits for connection "recv"
                                     respMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
                                     if respMsg == "UDP REQUESTING CONNECTION":
                                         # Now Open TCP socket && read in file's contents
-                                        serverSocketTCP = socket(AF_INET, SOCK_STREAM)  # sock_stream == TCP socket
-                                        serverSocketTCP.bind(('localhost', int(serverPort)))
-                                        serverSocketTCP.listen(1)
+                                        serverSocketTCPdwn = socket(AF_INET, SOCK_STREAM)  # sock_stream == TCP socket
+                                        print("binding")
+                                        serverSocketTCPdwn.bind(('localhost', int(serverPort)))
+                                        serverSocketTCPdwn.listen(1)
                                         # Send via UDP, that TCP socket is open
+                                        print("sending 'TCP OPEN'")
                                         serverSocket.sendto("TCP OPEN".encode("utf-8"), clientAddr)
                                         # Client now creates its connection socket and connects to Server's TCP socket
-                                        connectionSocket, clientTCPaddr = serverSocketTCP.accept()
+                                        print("accepting connection")
+                                        connectionSocket, clientTCPaddr = serverSocketTCPdwn.accept()
                                         # Read in file as BYTES and send it as BYTES
-                                        expectedFiletitle = str(cmdMsgBroken[1] + "-" + cmdMsgBroken[2])
+                                        expectedFiletitle = str(cmdMsgBroken[1] + "-" + cmdMsgBroken[2]) # This is name of file in server's CWD
                                         f = open(expectedFiletitle, "rb").read()
                                         contLen = len(f) # in bytes
                                         # First send the expected file size (UDP)
+                                        print("sending file size")
                                         serverSocket.sendto(f"{contLen}".encode("utf-8"), clientAddr)
                                         # Now send the whole file (TCP)
-                                        serverSocketTCP.sendall(f)
+                                        print("sending file")
+                                        connectionSocket.sendall(f)
                                         # once done, close TCP connection
+                                        print("closing socket")
                                         connectionSocket.close()
-                                        serverSocketTCP.close()
+                                        serverSocketTCPdwn.close()
                                         # Get recieved confirmation from Client
                                         respMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
                                         if respMsg == "FILE DOWNLOADED":

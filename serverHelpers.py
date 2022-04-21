@@ -170,13 +170,13 @@ def decrementMsgIDs(threadtitle, dltMsgID):
 
 # (Called by UPD) Adds the metadata of newly uploaded file to datastore
 # Assumes given threadtitle and filename are all correct (inclu. any other checks)
-def UPDfileToStore(threadtitle, newFiletitle, username):
+def UPDfileToStore(threadtitle, filename, username):
     store = data_store.get()
     for thread in store['threads']:
         if thread['threadtitle'] == threadtitle:
             fileID = len(thread['threadFiles']) + 1
             thread['threadFiles'].append({
-                "filetitle": newFiletitle,
+                "filetitle": filename,
                 "fileID": fileID,
                 "fileUser": username
             })
@@ -465,7 +465,7 @@ def UPD(threadtitle, filename, username):
             fileExists = False
             # Check if file already exists under thread
             for files in threads['threadFiles']:
-                if files['filetitle'] == newFiletitle:
+                if files['filetitle'] == filename:
                     fileExists = True
                     break # Should jump to next line
             if fileExists is False:
@@ -473,7 +473,7 @@ def UPD(threadtitle, filename, username):
 
     if retMsg == "Success":
         # Once ALL checks are passed, add meta to DataStore
-        UPDfileToStore(threadtitle, newFiletitle, username)
+        UPDfileToStore(threadtitle, filename, username)
         # Now write to thread file
         msgToAppend = f"\n{username} uploaded {filename}"
         f = open(f"{threadtitle}", "a") # open for appending
@@ -490,13 +490,14 @@ def DWN(threadtitle, filename, username):
     # Check if thread exists
     for threads in store['threads']:
         if threads['threadtitle'] == threadtitle:
+            print(f"DATASTORE: {threads}")
             retMsg = 'File Not In Thread'
             fileExists = False
             # Check if file does in fact exist under thread
             for files in threads['threadFiles']:
-                if files['filetitle'] == expectedFiletitle:
+                if files['filetitle'] == filename:
                     fileExists = True
                     break # Should jump to next line
-            if fileExists is False:
+            if fileExists is True:
                 retMsg = "Success"
     return retMsg
