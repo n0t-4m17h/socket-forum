@@ -5,8 +5,6 @@
 from socket import *
 import sys
 import os
-from datetime import datetime
-import time
 
 #####################
 #### Helper Fncs ####
@@ -481,19 +479,16 @@ if __name__ == "__main__":
                             clientSocket.sendto("UDP REQUESTING CONNECTION".encode("utf-8"), ('localhost', int(serverPort)))
                             currCmdEquals("UDP REQ SENT WAITING FOR RESP") # to pass next IF
                         if currCmd == "UDP REQ SENT WAITING FOR RESP":
-                            print("Waiting for 'TCP OPEN'")
                             resp = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
-                            print("Got it!!")
                         if resp == "TCP OPEN":
                             # Server's TCP socket open, now connect to it
                             clientSocketTCP = socket(AF_INET, SOCK_STREAM)
                             clientSocketTCP.connect(('localhost', int(serverPort)))
                             # Recieve expected File SIZE
-                            print("TCP connection set up now waiting for file size")
                             fileSizeStr = str(clientSocket.recvfrom(2048)[0], "utf-8").strip()
                             # Save incoming file in BYTES
                             fileContentsResp = clientSocketTCP.recv(int(fileSizeStr))
-                            clientSocketTCP.close()
+                            clientSocketTCP.close() ### CLOSE CLIENT END FIRST
                             # Save into client's CWD
                             f = open(cmdList[2].strip(), "wb") # this filename WON'T include threadtitle
                             f.write(fileContentsResp)

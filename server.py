@@ -7,8 +7,6 @@ from dataStore import data_store
 from socket import *
 import os
 import sys
-from datetime import datetime
-import time
 
 #################
 ### CMDS fncs ###
@@ -280,31 +278,25 @@ if __name__ == "__main__":
                                     if respMsg == "UDP REQUESTING CONNECTION":
                                         # Now Open TCP socket && read in file's contents
                                         serverSocketTCPdwn = socket(AF_INET, SOCK_STREAM)  # sock_stream == TCP socket
-                                        print("binding")
                                         serverSocketTCPdwn.bind(('localhost', int(serverPort)))
                                         serverSocketTCPdwn.listen(1)
                                         # Send via UDP, that TCP socket is open
-                                        print("sending 'TCP OPEN'")
                                         serverSocket.sendto("TCP OPEN".encode("utf-8"), clientAddr)
                                         # Client now creates its connection socket and connects to Server's TCP socket
-                                        print("accepting connection")
                                         connectionSocket, clientTCPaddr = serverSocketTCPdwn.accept()
                                         # Read in file as BYTES and send it as BYTES
                                         expectedFiletitle = str(cmdMsgBroken[1] + "-" + cmdMsgBroken[2]) # This is name of file in server's CWD
                                         f = open(expectedFiletitle, "rb").read()
                                         contLen = len(f) # in bytes
                                         # First send the expected file size (UDP)
-                                        print("sending file size")
                                         serverSocket.sendto(f"{contLen}".encode("utf-8"), clientAddr)
                                         # Now send the whole file (TCP)
-                                        print("sending file")
                                         connectionSocket.sendall(f)
-                                        # once done, close TCP connection
-                                        print("closing socket")
+                                        # Get recieved confirmation from Client #####################################
+                                        respMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip() #################
+                                        # once done, close TCP connection ### (CLOSED HERE TO ALLOW CLIENT TO CLOSE ITS END FIRST)
                                         connectionSocket.close()
                                         serverSocketTCPdwn.close()
-                                        # Get recieved confirmation from Client
-                                        respMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
                                         if respMsg == "FILE DOWNLOADED":
                                             print(f'"{username}" downloaded file "{cmdMsgBroken[2]}" from thread "{cmdMsgBroken[1]}"!')
                                         else: 

@@ -7,8 +7,6 @@ from server import *
 from socket import *
 import os
 import sys
-from datetime import datetime
-import time
 
 #################
 ### MISC Fncs ###
@@ -237,7 +235,8 @@ def RMV(threadtitle, username):
             if thread['threadtitle'] == threadtitle:
                 # Remove all matching threadFiles from CWD
                 for file in thread['threadFiles']:
-                    os.remove(f"{file['filetitle']}") # removes files from server's cwd
+                    expectedFilename = str(threadtitle + "-" + file['filetitle'])
+                    os.remove(f"{expectedFilename}") # removes files from server's cwd
                 # Remove whole thread
                 store['threads'].remove(thread)
                 data_store.set(store) # update data store accordingly
@@ -490,7 +489,6 @@ def DWN(threadtitle, filename, username):
     # Check if thread exists
     for threads in store['threads']:
         if threads['threadtitle'] == threadtitle:
-            print(f"DATASTORE: {threads}")
             retMsg = 'File Not In Thread'
             fileExists = False
             # Check if file does in fact exist under thread
