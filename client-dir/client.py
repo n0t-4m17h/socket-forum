@@ -1,7 +1,7 @@
 # Python Version: 3.8.10
-# Program written by z5361183
 # 10/04/22
-# Run: $ python3 client.py serverPort
+# Run: $python3 client.py serverPort
+#      on a seperate terminal to which server.py is running on 
 from socket import *
 import sys
 import os

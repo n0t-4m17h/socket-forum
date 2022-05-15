@@ -1,7 +1,7 @@
 # Python Version: 3.8.10
-# Program written by z5361183
 # 10/04/22
-# Run: $ python3 server.py serverPort 
+# Run: $python3 server.py serverPort 
+#      before running client.py 
 from serverHelpers import *
 from dataStore import data_store
 from socket import *

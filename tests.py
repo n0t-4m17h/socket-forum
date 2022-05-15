@@ -1,4 +1,6 @@
-# For testing certain file-stuff (and more) cmds in a smaller environment
+### T E S T I N G ###
+# This file is for testing functionality of certain file-related (and more) commands 
+# in a smaller/controlled environment !!
 
 from socket import *
 import os
@@ -58,7 +60,6 @@ def EDTbreakCmdInput(userInput):
             retInput.remove(i)
     return retInput
 
-
 def appendToEOF(stringToAppend):
     f = open("credentials.txt", "a") # open in "access" mode
     f.write(stringToAppend)
@@ -77,6 +78,8 @@ def CRT(username, title):
     # for files in os.listdir('.'):
     #     print(files)
     # pass
+
+
 def MSG(title, msg, username):
     # check file exists
     try:
@@ -115,6 +118,8 @@ def MSG(title, msg, username):
         print("MSG cmd's file not found")
         # snedto("MSG FAILURE")
 
+
+
 def RDT(threadtitle):
     # First used readlines()
     f = open(f"{threadtitle}", "r")
@@ -131,6 +136,8 @@ def RDT(threadtitle):
     # returns a string of all the contents, EACH line in file is seperated via "\n" (print out to terminal to check this)
     # when client recieves this, client does .split("\n")
     return fileLines
+
+
 
 def EDT(threadtitle, username, msgID, newMsg):
     # Now go edit the message in file
@@ -162,6 +169,8 @@ def EDT(threadtitle, username, msgID, newMsg):
     f.close()
     print(f"EDT: Msg id '{msgID}' has been edited!")
     # return retMsg       
+
+
 
 # DOESNT decrement msgIDs (implem. seperately in serverHelpers.py)
 def DLT(threadtitle, msgID, username):
@@ -213,19 +222,23 @@ def DLT(threadtitle, msgID, username):
     # if ctr == len(allLinesF):
     #     print(allLinesF[ctr - 1])
     #     allLinesF[ctr - 1].rstrip() # new messages are added with prefix "\n", so all g
+
+
+
+
+
+
+
 if __name__ == "__main__":
     # pass
     # print(EDTbreakCmdInput("EDT shrek1 hans 2 hello darkness my old friend"))
 
-    # CRT("shrek", "shrek1")
-    # MSG("shrek1", "ogres are like onions", "shrek") # msgID 1
-    # MSG("shrek1", "they smell?", "donkeh") # msgID 2
-    # MSG("shrek1", "NO!", "shrek") # msgID 3
-    # MSG("shrek1", "ok boomer", "donkeh") # msgID 4
+    CRT("shrek", "shrek1")
+    MSG("shrek1", "ogres are like onions", "shrek") # msgID 1
+    MSG("shrek1", "they smell?", "donkeh") # msgID 2
+    MSG("shrek1", "NO!", "shrek") # msgID 3
+    MSG("shrek1", "ok boomer", "donkeh") # msgID 4
     DLT("shrek1", "1", "shrek")
-
-    # just write in "Uplaoded file by deez"
-    # then DLT().....
 
     # str1 = "24 yoda: may force bee"
     # str2 = list(str1.partition(" "))
