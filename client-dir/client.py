@@ -1,6 +1,6 @@
 # Python Version: 3.8.10
 # 10/04/22
-# Run: $python3 client.py serverPort
+# Run: $python3 client.py <serverPortNum>
 #      on a seperate terminal to which server.py is running on 
 from socket import *
 import sys
