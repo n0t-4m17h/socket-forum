@@ -30,23 +30,24 @@ Refer to the header comments of these files on how to run the forum.
 #### 7) , 8)
 * Lastly, client logs out via *XIT*, which notifies the server which then reverts its state back to waiting for a new client connection. 
 
-#### Example thread file's contents:
+### Example thread file's contents:
 <img src='extras/md-images/example-thread.jpg' />
 
 <br />
 <br />
 
-#### Improvements:
+### Improvements:
 * **Concurrency**
-** Support for multiple clients at a time.
+  * Support for multiple clients at a time.
 * **Persistence**
-** Instead of wiping dataStore class when server shuts down, save it into a json file and read from it upon start up.
+  * Instead of wiping dataStore class when server shuts down, save it into a json file and read from it upon start up.
 * **Classes**
-** Better to fully implement classes for extensibility, and follow OOP design patterns, such as State Pattern for *Server.py* (waiting for client, authenticating, listening etc.)
+  * Better to fully implement classes for extensibility, and follow OOP design patterns, such as State Pattern for *Server.py* (waiting for client, authenticating, listening etc.)
 * **Improved RDT method**
-** Instead of the current sketchy Reliable Data Transfer method (timeouts + global vars), additionally implementing Sequence Number, Checksums and ACKs would solidify the UDP connection against packet loss and corruption, as per [RDT 3.0](https://gaia.cs.umass.edu/kurose_ross/interactive/rdt30.php). This would also allow delegation of some behaviour in *Client.py* to another static helper class, as the current file is too crowded.
+  * Instead of the current sketchy Reliable Data Transfer method (timeouts + global vars), additionally implementing Sequence Number, Checksums and ACKs would solidify the UDP connection against packet loss and corruption, as per [RDT 3.0](https://gaia.cs.umass.edu/kurose_ross/interactive/rdt30.php). 
+  * This would also allow delegation of some behaviour in *Client.py* to another static helper class, as the current file is too crowded.
 * **Organisation of threads**
-** Even though threads and its contents are uncessarily physically saved, organising the thread itself and it's uploaded files into its own seperate directory (within Server's root dir) would be much cleaner and clearer, instead of simply saving them into server's root directory.
+  * Even though threads and its contents are uncessarily physically saved, organising the thread itself and it's uploaded files into its own seperate directory (within Server's root dir) would be much cleaner and clearer, instead of simply saving them into server's root directory.
 <br />
 
 
