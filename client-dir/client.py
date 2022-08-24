@@ -1,7 +1,7 @@
 # Python Version: 3.8.10
 # 10/04/22
 # Run: $python3 client.py <serverPortNum>
-#      on a seperate terminal to which server.py is running on 
+#      on a seperate terminal to which server.py is already running on 
 from socket import *
 import sys
 import os
@@ -140,7 +140,6 @@ def DWN(clientSocket, serverPort, threadtitle, filename, currCmd):
     return resp
 
 # let the OS pick a random Client Port -> "sock.bind(('localhost', 0))", selected port is in "sock.getsockname()"
-# REFER TO LAB02 !!!!****
 ##################
 #### MAIN Fnc ####
 ##################
@@ -241,7 +240,7 @@ if __name__ == "__main__":
                 elif cmdList[0] == "CRT":
                     # Include CRT-specific error checking !!
                     if len(cmdList) != 2: # should only be "CRT <title>"
-                        print("Incorrect syntax for CRT")
+                        print("Incorrect syntax for CRT --> \"CRT <threadtitle>\" ")
                         currCmdEquals("ENTER CMD")
                         continue
                     else:
@@ -257,7 +256,7 @@ if __name__ == "__main__":
                 # RMV
                 elif cmdList[0] == "RMV":
                     if len(cmdList) != 2:
-                        print("Incorrect syntax for RMV")
+                        print("Incorrect syntax for RMV --> \"RMV <threadtitle>\" ")
                         currCmdEquals("ENTER CMD")
                         continue
                     else:
@@ -277,7 +276,7 @@ if __name__ == "__main__":
                 # LST
                 elif cmdList[0] == "LST":
                     if len(cmdList) != 1:
-                        print("Incorrect syntax for LST")
+                        print("Incorrect syntax for LST --> \"LST\" ")
                         currCmdEquals("ENTER CMD")
                         continue
                     else:
@@ -299,7 +298,7 @@ if __name__ == "__main__":
                         if i == '':
                             cmdList.remove(i)
                     if len(cmdList) != 3: # should only be "MSG <title> '<arg1>...<argX>'", everything after <title> is grouped as one string
-                        print("Incorrect syntax for MSG")
+                        print("Incorrect syntax for MSG --> \"MSG <threadtitle> <msg_string>\" ")
                         currCmdEquals("ENTER CMD")
                         continue
                     else:
@@ -315,7 +314,7 @@ if __name__ == "__main__":
                 # RDT
                 elif cmdList[0] == "RDT":
                     if len(cmdList) != 2: # should only be "RDT <title>""
-                        print("Incorrect syntax for RDT")
+                        print("Incorrect syntax for RDT --> \"RDT <threadtitle>\" ")
                         currCmdEquals("ENTER CMD")
                         continue
                     else:
@@ -337,7 +336,7 @@ if __name__ == "__main__":
                 # EDT
                 elif cmdList[0] == "EDT":
                     if len(cmdList) < 3: # should only be "EDT <title> <msgID> <msg...>" atleast
-                        print("Incorrect syntax for EDT")
+                        print("Incorrect syntax for EDT --> \"EDT <threadtitle> <msgID_to_edit> <new_msg_string>\" ")
                         print("here")
                         currCmdEquals("ENTER CMD")
                         continue
@@ -379,7 +378,7 @@ if __name__ == "__main__":
                 # DLT
                 elif cmdList[0] == "DLT":
                     if len(cmdList) != 3: # should only be "DLT <title> <msgID>"
-                        print("Incorrect syntax for DLT")
+                        print("Incorrect syntax for DLT --> \"DLT <threadtitle> <msgID>\" ")
                         currCmdEquals("ENTER CMD")
                         continue
                     try:
@@ -411,7 +410,7 @@ if __name__ == "__main__":
                 # UPD
                 elif cmdList[0] == "UPD":
                     if len(cmdList) != 3: # should only be "UPD <title> <filename>"
-                        print("Incorrect syntax for UPD")
+                        print("Incorrect syntax for UPD --> \"UPD <threadtitle> <filename>\" ")
                         currCmdEquals("ENTER CMD")
                         continue
                     # Give Server the command && Wait for server response
@@ -459,7 +458,7 @@ if __name__ == "__main__":
                 # DWN
                 elif cmdList[0] == "DWN":
                     if len(cmdList) != 3: # should only be "DWN <title> <filename>"
-                        print("Incorrect syntax for DWN")
+                        print("Incorrect syntax for DWN --> \"DWN <threadtitle> <filename>\" ")
                         currCmdEquals("ENTER CMD")
                         continue
                     # Give Server the command && Wait for server response
@@ -502,7 +501,7 @@ if __name__ == "__main__":
                 # XIT
                 elif cmdList[0] == "XIT":
                     if len(cmdList) != 1:
-                        print("WRONG syntax for XIT")
+                        print("Incorrect syntax for XIT --> \"XIT\" ")
                     else:
                         XIT(clientSocket, serverPort, username)
         

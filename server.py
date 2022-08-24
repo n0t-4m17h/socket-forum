@@ -8,11 +8,6 @@ from socket import *
 import os
 import sys
 
-#################
-### CMDS fncs ###
-#################
-
-
 
 ##################
 #### MAIN Fnc ####
@@ -28,7 +23,6 @@ if __name__ == "__main__":
 
     serverSocket = socket(AF_INET, SOCK_DGRAM) 
     serverSocket.bind(('localhost', serverPort))
-    # serverSocket.listen(1) # only for TCP ??
 
     while 1: # while loop 1 for Server's infinite loop
         try:
@@ -40,7 +34,7 @@ if __name__ == "__main__":
             checkForNewUserIter, i = 0, 0
             currCmd = ""
             userOnline = True
-            while userOnline: # while loop 2 for authenticating
+            while userOnline: # while loop 2 for AUTHENTICATION ##########
                 serverSocket.settimeout(WAIT_TIME_AUTH) # Assuming user enters Auth-cmds within 20secs
                 # messagePass, clientAddr = serverSocket.recvfrom(2048)
                 try:
@@ -87,8 +81,7 @@ if __name__ == "__main__":
                             print(f'Wrong username: "{username}"')
                             prevUsernameInput = username
                             continue
-                        # if iterator != 0 && prevUserInput == user, 
-                        # then User's being prompted by Client a 2nd time, so create a new User now
+                        # if iterator != 0 && prevUserInput == user, then User's being prompted by Client a 2nd time, so create a new User now
                         else:
                             # request Client for password and append both to credentials.txt file (createNewUser() will do that)
                             # dont resend request if coming back from socket.timeout
@@ -104,11 +97,11 @@ if __name__ == "__main__":
                             # code now jumps to 3rd while loop, in 3 lines
                     # currCmd = "WAITING FOR CMD" # to pass next IF
                     checkForNewUserIter = 0 # reset this for the next Client ??
-                    while 1: # while loop 3 for normal COMMANDS (after logging in)
+                    while 1: # while loop 3 for normal COMMANDS (after logging in) ##########
                         try:
                             serverSocket.settimeout(WAIT_TIME_CMDS) # Assuming user enters a CMD within 30secs
                             # request msg from Client, and break it down via "<cmd> <arg1>...<argX>"
-                            # # This IF prevents waiting for CMD, incases of socket timeout
+                            # # This IF statement prevents waiting for CMD, incases of socket timeout
                             # # if "WAITING FOR CMD" in currCmd:
                             currCmd = "WAITING FOR CMD"
                             cmdMsg = (str(serverSocket.recvfrom(2048)[0], "utf-8")).strip()
@@ -242,7 +235,7 @@ if __name__ == "__main__":
                                         serverSocket.sendto("TCP OPEN".encode("utf-8"), clientAddr)
                                         # Client now creates its connection socket and connects to Server's TCP socket
                                         connectionSocket, clientTCPaddr = serverSocketTCP.accept()
-                                        # print(f'New TCP connection from: "{clientTCPaddr}" of user "{username}"')
+                                        # # print(f'New TCP connection from: "{clientTCPaddr}" of user "{username}"')
 
                                         # Recieve file as BYTES and write them into cwd as BYTEs ('wb')
                                         # First ask for the size of the file (UDP), then ask for the file's contents

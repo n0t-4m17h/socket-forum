@@ -276,7 +276,7 @@ if __name__ == "__main__":
     # strToAppend = "\n" + f"{user}" + f" {password}"
     # appendToEOF(strToAppend)
 
-    # print(EDTbreakCmdInput("EDT 3331 3 hello thendi pattis"))
+    # print(EDTbreakCmdInput("EDT 3331 3 hello there"))
     
     # userIn = str(input("Enter cmd: "))
     # cmdList = breakCmdInput(userIn)
